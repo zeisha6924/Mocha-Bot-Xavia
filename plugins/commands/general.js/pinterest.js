@@ -53,8 +53,8 @@ async function onCall({ message, args }) {
                 filePaths.push(filePath);
             }
 
-            // Send all images in one message with a simple text
-            await message.send({
+            // Send all images as a direct reply to the original message
+            await message.reply({
                 body: `Here are the top images for "${query}".`,
                 attachment: filePaths.map(filePath => fs.createReadStream(filePath))
             });
@@ -63,12 +63,12 @@ async function onCall({ message, args }) {
             filePaths.forEach(filePath => fs.unlinkSync(filePath));
 
         } else {
-            await message.send(`I couldn't find any images for "${query}".`);
+            await message.reply(`I couldn't find any images for "${query}".`);
         }
 
     } catch (error) {
         console.error(error);
-        await message.send("There was an error accessing Pinterest or downloading the images. Please try again later.");
+        await message.reply("There was an error accessing Pinterest or downloading the images. Please try again later.");
     }
 }
 
