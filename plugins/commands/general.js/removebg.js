@@ -21,13 +21,19 @@ const config = {
 
 /** @type {TReplyCallback} */
 async function onReply({ message, balance, getLang, data, xDB, eventData }) {
-    // Check if the replied message has an image
+    // Check if the message is a reply
     const repliedMessage = eventData.message;
-    if (!repliedMessage || !repliedMessage.attachments || repliedMessage.attachments.length === 0) {
+    if (!repliedMessage || !repliedMessage.isReply) {
         return message.send("Please reply to an image message.");
     }
 
-    const imageUrl = repliedMessage.attachments[0].url; // Assuming the URL is stored in this format
+    // Check if the replied message has an image
+    const repliedAttachments = repliedMessage.attachments || [];
+    if (repliedAttachments.length === 0) {
+        return message.send("Please reply to an image message.");
+    }
+
+    const imageUrl = repliedAttachments[0].url; // Assuming the URL is stored in this format
 
     try {
         const imageBuffer = await samirapi.remBackground(imageUrl);
