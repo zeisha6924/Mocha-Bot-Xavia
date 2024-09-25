@@ -7,7 +7,7 @@ const config = {
     name: "pinte",
     aliases: ["pinte"],
     description: "Search for images on Pinterest based on a query.",
-    usage: "[query]",
+    usage: "[query] -[number of images]",
     cooldown: 5,
     permissions: [1, 2],
     isAbsolute: false,
@@ -22,24 +22,50 @@ const cachePath = './plugins/commands/cache';
 
 /** @type {TOnCallCommand} */
 async function onCall({ message, args }) {
-    const query = args.join(" ") || "beautiful landscapes";
-    
-    // Prepare to fetch images from both requests
+    let imageCount = 1;
+    const query = args.slice(0, -1).join(" ") || "beautiful landscapes";
+
+    // Extract the number of images if provided
+    const countArg = args[args.length - 1];
+    if (countArg.startsWith('-')) {
+        imageCount = parseInt(countArg.slice(1), 10);
+        if (isNaN(imageCount) || imageCount < 1) {
+            imageCount = 1;  // Default to 1 if invalid
+        } else if (imageCount > 12) {
+            imageCount = 12; // Cap at 12
+        }
+    }
+
+    // Prepare to fetch images
     const allImages = [];
+    let fetchedImagesCount = 0;
 
     try {
-        // First request
-        const images1 = await samirapi.searchPinterest(query);
-        console.log("Pinterest Images (1):", images1);
-        if (images1.result) {
-            allImages.push(...images1.result);
-        }
+        // Fetch images in increments of 6 (2 requests max)
+        while (fetchedImagesCount < imageCount) {
+            const remaining = imageCount - fetchedImagesCount;
+            const fetchLimit = remaining > 6 ? 6 : remaining;
 
-        // Second request with query + 1
-        const images2 = await samirapi.searchPinterest(`${query} 1`);
-        console.log("Pinterest Images (2):", images2);
-        if (images2.result) {
-            allImages.push(...images2.result);
+            // First request
+            const images1 = await samirapi.searchPinterest(query);
+            console.log(`Pinterest Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images1.result.length}):`, images1);
+            if (images1.result) {
+                allImages.push(...images1.result.slice(0, fetchLimit));
+                fetchedImagesCount += images1.result.length;
+            }
+
+            if (fetchedImagesCount < imageCount) {
+                // Second request with query + 1
+                const images2 = await samirapi.searchPinterest(`${query} 1`);
+                console.log(`Pinterest Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images2.result.length}):`, images2);
+                if (images2.result) {
+                    allImages.push(...images2.result.slice(0, fetchLimit));
+                    fetchedImagesCount += images2.result.length;
+                }
+            }
+
+            // Break if no more images found
+            if (fetchedImagesCount >= imageCount) break;
         }
 
         if (allImages.length > 0) {
@@ -69,7 +95,7 @@ async function onCall({ message, args }) {
 
             // Send all images in one message as a direct reply
             await message.reply({
-                body: `Here are the top images for "${query}".`,
+                body: `Here are the top ${imageCount} images for "${query}".`,
                 attachment: filePaths.map(filePath => fs.createReadStream(filePath))
             });
 
