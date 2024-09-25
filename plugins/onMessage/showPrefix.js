@@ -1,9 +1,9 @@
 const langData = {
     "en_US": {
-        "prefix.get": "Prefix is: {prefix}"
+        "prefix.get": "🌐 System's Current Prefix [ {prefix} ]"
     },
     "vi_VN": {
-        "prefix.get": "Prefix hiện tại là: {prefix}"
+        "prefix.get": "🌐 System's Current Prefix [ {prefix} ]"
     }
 }
 
