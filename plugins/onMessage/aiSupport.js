@@ -1,4 +1,4 @@
-const cachePath = './plugins/commands/general/ai.js';
+const cachePath = '../commands/general/ai.js';  // Adjusted path relative to aiSupport.js
 
 // Dynamically import the AI command script
 let aiCommand;
