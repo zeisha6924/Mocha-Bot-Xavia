@@ -1,4 +1,13 @@
-import { default as aiCommand } from './ai.js';
+const cachePath = './plugins/commands/general/ai.js';
+
+// Dynamically import the AI command script
+let aiCommand;
+try {
+    aiCommand = await import(cachePath).then(module => module.default);
+} catch (error) {
+    console.error(`Failed to load AI command script from ${cachePath}:`, error);
+    throw error;
+}
 
 function onCall({ message, args, getLang, data, userPermissions }) {
     const input = message.body.trim();
