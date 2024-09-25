@@ -19,6 +19,8 @@ const config = {
     },
 };
 
+const cachePath = './plugins/commands/cache';
+
 /** @type {TOnCallCommand} */
 async function onCall({ message, args }) {
     const query = args.join(" ") || "beautiful landscapes";
@@ -30,7 +32,7 @@ async function onCall({ message, args }) {
         if (images.result.length > 0) {
             for (let i = 0; i < images.result.length; i++) {
                 const url = images.result[i];
-                const filePath = path.resolve(__dirname, `image${i}.jpg`);
+                const filePath = path.join(cachePath, `image${i}.jpg`);
                 const writer = fs.createWriteStream(filePath);
 
                 const response = await axios({
