@@ -1,85 +1,85 @@
-import samirapi from 'samirapi';
-import FormData from 'form-data';
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
+import fs from 'fs-extra';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 const config = {
-    name: "pinte",
-    aliases: ["pinte"],
-    description: "Search for images on Pinterest based on a query.",
-    usage: "[query]",
-    cooldown: 5,
-    permissions: [1, 2],
-    isAbsolute: false,
-    isHidden: false,
-    credits: "coffee",
-    extra: {
-        searchType: "images",
-    },
+  name: 'pinterest',
+  aliases: ["pin"],
+  version: '1.1.0',
+  credits: 'Hadi Pranata',
+  description: 'Search Images in Pinterest',
+  usages: '<query> <amount>',
+  cooldown: 10
 };
 
-const cachePath = './plugins/commands/cache';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const cacheFolder = `${__dirname}/cache`;
 
-/** @type {TOnCallCommand} */
-async function onCall({ message, args }) {
-    const query = args.join(" ") || "beautiful landscapes";
+// Ensure cache folder exists
+const ensureCacheFolderExists = async () => {
+  try {
+    await fs.ensureDir(cacheFolder);
+  } catch (error) {
+    console.error(`[ERROR] Failed to create cache folder: ${cacheFolder}\n`, error);
+  }
+};
 
-    try {
-        const images = await samirapi.searchPinterest(query);
-        console.log("Pinterest Images:", images);
+const onCall = async ({ message, args }) => {
+  const { messageID, threadID } = message;
+  const keySearch = args.join(' ');
 
-        if (images.result.length > 0) {
-            const filePaths = [];
+  // Validate input
+  if (!keySearch.includes('-')) {
+    return message.send(`📷 | Please follow this format:\n-pinterest cat -5`, threadID, messageID);
+  }
 
-            for (let i = 0; i < images.result.length; i++) {
-                const url = images.result[i];
-                const filePath = path.join(cachePath, `image${i}.jpg`);
-                const writer = fs.createWriteStream(filePath);
+  const [keySearchs, numberSearch] = keySearch.split('-').map((str, index) => index === 1 ? str || 6 : str.trim());
 
-                const response = await axios({
-                    url,
-                    method: 'GET',
-                    responseType: 'stream',
-                });
+  // Ensure cache folder exists
+  await ensureCacheFolderExists();
+  await message.react("⌛");
 
-                response.data.pipe(writer);
+  try {
+    // Fetch images from the API
+    const res = await axios.get(`https://deku-rest-api.gleeze.com/api/pinterest?q=${encodeURIComponent(keySearchs)}`);
+    const data = res.data.result || [];
+    const imgData = [];
 
-                await new Promise((resolve, reject) => {
-                    writer.on('finish', resolve);
-                    writer.on('error', reject);
-                });
-
-                filePaths.push(filePath);
-            }
-
-            // Send all images as a direct reply to the original message
-            await message.reply({
-                body: `Here are the top images for "${query}".`,
-                attachment: filePaths.map(filePath => fs.createReadStream(filePath))
-            });
-
-            // Cleanup: Remove downloaded files
-            filePaths.forEach(filePath => fs.unlinkSync(filePath));
-
-        } else {
-            await message.reply(`I couldn't find any images for "${query}".`);
-        }
-
-    } catch (error) {
-        console.error(error);
-        await message.reply("There was an error accessing Pinterest or downloading the images. Please try again later.");
+    // Download and cache images
+    for (let i = 0; i < Math.min(parseInt(numberSearch), data.length); i++) {
+      const imageBuffer = (await axios.get(data[i], { responseType: 'arraybuffer' })).data;
+      const path = `${cacheFolder}/${i + 1}.jpg`;
+      fs.writeFileSync(path, imageBuffer);
+      imgData.push(fs.createReadStream(path));
     }
-}
 
-/** @type {TReplyCallback} */
-async function onReply({ message }) {
-    // Handle replies to the bot's message
-}
+    await message.react("✔️");
 
-/** @type {TReactCallback} */
-async function onReaction({ message }) {
-    // Handle reactions to the bot's message
-}
+    // Send images as a message
+    message.send({
+      attachment: imgData,
+      body: `Here are ${imgData.length} results for "${keySearchs}"`
+    }, threadID, messageID);
 
-export { config, onCall };
+  } catch (error) {
+    console.error(`[ERROR] An error occurred while processing your request:\n`, error);
+    message.send(`❌ | An error occurred while fetching images. Please try again later.`, threadID, messageID);
+  } finally {
+    // Clean up cached images
+    imgData.forEach((_, index) => {
+      const filePath = `${cacheFolder}/${index + 1}.jpg`;
+      try {
+        fs.unlinkSync(filePath);
+      } catch (error) {
+        console.error(`[ERROR] Failed to delete cache file: ${filePath}\n`, error);
+      }
+    });
+  }
+};
+
+export default {
+  config,
+  onCall,
+};
