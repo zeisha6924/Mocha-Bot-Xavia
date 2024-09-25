@@ -1,5 +1,4 @@
 import samirapi from 'samirapi';
-import FormData from 'form-data';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
@@ -30,6 +29,8 @@ async function onCall({ message, args }) {
         console.log("Pinterest Images:", images);
 
         if (images.result.length > 0) {
+            const filePaths = [];
+
             for (let i = 0; i < images.result.length; i++) {
                 const url = images.result[i];
                 const filePath = path.join(cachePath, `image${i}.jpg`);
@@ -48,23 +49,25 @@ async function onCall({ message, args }) {
                     writer.on('error', reject);
                 });
 
-                // Send the image to the user
-                await message.send({
-                    body: `Image ${i + 1} for "${query}"`,
-                    attachment: fs.createReadStream(filePath)
-                });
-
-                // Cleanup: Remove downloaded file
-                fs.unlinkSync(filePath);
+                filePaths.push(filePath);
             }
 
+            // Send all images in one message as a direct reply
+            await message.reply({
+                body: `Here are the top images for "${query}".`,
+                attachment: filePaths.map(filePath => fs.createReadStream(filePath))
+            });
+
+            // Cleanup: Remove downloaded files
+            filePaths.forEach(filePath => fs.unlinkSync(filePath));
+
         } else {
-            await message.send(`No images found for "${query}".`);
+            await message.reply(`I couldn't find any images for "${query}".`);
         }
 
     } catch (error) {
         console.error(error);
-        await message.send("There was an error accessing Pinterest or downloading the images. Please try again later.");
+        await message.reply("There was an error accessing Pinterest or downloading the images. Please try again later.");
     }
 }
 
