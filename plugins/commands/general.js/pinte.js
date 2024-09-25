@@ -22,7 +22,7 @@ const cachePath = './plugins/commands/cache';
 
 /** @type {TOnCallCommand} */
 async function onCall({ message, args }) {
-    let imageCount = 1;
+    let imageCount = 1; // Default to 1 image
     const query = args.slice(0, -1).join(" ") || "beautiful landscapes";
 
     // Extract the number of images if provided
@@ -41,10 +41,10 @@ async function onCall({ message, args }) {
     let fetchedImagesCount = 0;
 
     try {
-        // Fetch images in increments of 6 (2 requests max)
+        // Fetch images in increments of 6 (two requests max)
         while (fetchedImagesCount < imageCount) {
             const remaining = imageCount - fetchedImagesCount;
-            const fetchLimit = remaining > 6 ? 6 : remaining;
+            const fetchLimit = Math.min(6, remaining); // Only fetch up to 6 at a time
 
             // First request
             const images1 = await samirapi.searchPinterest(query);
@@ -68,12 +68,15 @@ async function onCall({ message, args }) {
             if (fetchedImagesCount >= imageCount) break;
         }
 
-        if (allImages.length > 0) {
+        // Limit the number of images sent to the user
+        const finalImages = allImages.slice(0, imageCount);
+
+        if (finalImages.length > 0) {
             const filePaths = [];
 
             // Download all images
-            for (let i = 0; i < allImages.length; i++) {
-                const url = allImages[i];
+            for (let i = 0; i < finalImages.length; i++) {
+                const url = finalImages[i];
                 const filePath = path.join(cachePath, `image${i}.jpg`);
                 const writer = fs.createWriteStream(filePath);
 
@@ -95,7 +98,7 @@ async function onCall({ message, args }) {
 
             // Send all images in one message as a direct reply
             await message.reply({
-                body: `Here are the top ${imageCount} images for "${query}".`,
+                body: `Here are the top ${finalImages.length} images for "${query}".`,
                 attachment: filePaths.map(filePath => fs.createReadStream(filePath))
             });
 
