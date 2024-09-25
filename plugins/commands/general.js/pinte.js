@@ -23,16 +23,31 @@ const cachePath = './plugins/commands/cache';
 /** @type {TOnCallCommand} */
 async function onCall({ message, args }) {
     const query = args.join(" ") || "beautiful landscapes";
+    
+    // Prepare to fetch images from both requests
+    const allImages = [];
 
     try {
-        const images = await samirapi.searchPinterest(query);
-        console.log("Pinterest Images:", images);
+        // First request
+        const images1 = await samirapi.searchPinterest(query);
+        console.log("Pinterest Images (1):", images1);
+        if (images1.result) {
+            allImages.push(...images1.result);
+        }
 
-        if (images.result.length > 0) {
+        // Second request with query + 1
+        const images2 = await samirapi.searchPinterest(`${query} 1`);
+        console.log("Pinterest Images (2):", images2);
+        if (images2.result) {
+            allImages.push(...images2.result);
+        }
+
+        if (allImages.length > 0) {
             const filePaths = [];
 
-            for (let i = 0; i < images.result.length; i++) {
-                const url = images.result[i];
+            // Download all images
+            for (let i = 0; i < allImages.length; i++) {
+                const url = allImages[i];
                 const filePath = path.join(cachePath, `image${i}.jpg`);
                 const writer = fs.createWriteStream(filePath);
 
