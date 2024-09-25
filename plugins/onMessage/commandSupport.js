@@ -1,17 +1,17 @@
 const commandFiles = [
-    '../commands/general/ai.js',
-    '../commands/general/gemini.js',
-    '../commands/general/gpt.js',
-    '../commands/general/help.js',
-    '../commands/general/imagine.js',
-    '../commands/general/lyrics.js',
-    '../commands/general/pinterest.js',
-    '../commands/general/remini.js',
-    '../commands/general/spotify.js',
-    '../commands/general/tid.js',
-    '../commands/general/translate.js',
-    '../commands/general/uid.js',
-    '../commands/general/unsend.js',
+    { path: '../commands/general/ai.js', name: 'ai' },
+    { path: '../commands/general/gemini.js', name: 'gemini' },
+    { path: '../commands/general/gpt.js', name: 'gpt' },
+    { path: '../commands/general/help.js', name: 'help' },
+    { path: '../commands/general/imagine.js', name: 'imagine' },
+    { path: '../commands/general/lyrics.js', name: 'lyrics' },
+    { path: '../commands/general/pinterest.js', name: 'pinterest' },
+    { path: '../commands/general/remini.js', name: 'remini' },
+    { path: '../commands/general/spotify.js', name: 'spotify' },
+    { path: '../commands/general/tid.js', name: 'tid' },
+    { path: '../commands/general/translate.js', name: 'translate' },
+    { path: '../commands/general/uid.js', name: 'uid' },
+    { path: '../commands/general/unsend.js', name: 'unsend' },
     // Add future commands here
 ];
 
@@ -27,20 +27,25 @@ async function loadCommand(filePath) {
 
 async function onCall({ message }) {
     const input = message.body.trim();
-    const commandName = input.split(" ")[0].toLowerCase(); // Get the command from the message
+    
+    for (const { path, name } of commandFiles) {
+        // Check if the input starts with the command name
+        if (input.toLowerCase().startsWith(name)) {
+            const command = await loadCommand(path);
 
-    for (const filePath of commandFiles) {
-        const command = await loadCommand(filePath);
-        if (command && command.config.aliases.includes(commandName)) {
-            const args = input.slice(commandName.length).trim().split(" "); // Get the arguments for the command
-            await command.onCall({
-                message,
-                args,
-                getLang: (key) => key, // Placeholder for getLang function, modify as needed
-                data: {}, // Add relevant data if required
-                userPermissions: message.senderID, // Assuming senderID is used for permissions
-            });
-            return; // Exit after processing the command
+            if (command && command.config) {
+                const args = input.slice(name.length).trim().split(" "); // Get the arguments for the command
+                
+                // Call the command's onCall function
+                await command.onCall({
+                    message,
+                    args,
+                    getLang: (key) => key, // Placeholder for getLang function, modify as needed
+                    data: {}, // Add relevant data if required
+                    userPermissions: message.senderID, // Assuming senderID is used for permissions
+                });
+                return; // Exit after processing the command
+            }
         }
     }
 
