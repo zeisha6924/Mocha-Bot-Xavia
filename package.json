@@ -43,6 +43,7 @@
     "moment-timezone": "^0.5.38",
     "mongoose": "^7.5.0",
     "node-cron": "^3.0.2",
+    "samirapi": "^1.0.3",
     "semver": "^7.3.8",
     "string-similarity": "^4.0.4",
     "wikijs": "^6.4.0",
