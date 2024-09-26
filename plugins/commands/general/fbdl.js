@@ -28,14 +28,14 @@ async function onCall({ message, args, getLang }) {
     try {
         // Ensure the message being sent is valid
         const sendingMessage = getLang("message") || "Processing your request...";
-        const msgData = await message.send(sendingMessage);
+        await message.send(sendingMessage);
         const data = await samirapi.facebook(videoUrl);
 
         // Assuming 'data' contains the download URL
         if (data && data.downloadUrl) {
-            await msgData.reply(`Here is your video: ${data.downloadUrl}`);
+            await message.send(`Here is your video: ${data.downloadUrl}`);
         } else {
-            await msgData.reply("Sorry, I couldn't retrieve the video. Please check the URL.");
+            await message.send("Sorry, I couldn't retrieve the video. Please check the URL.");
         }
     } catch (error) {
         console.error(error);
