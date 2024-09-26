@@ -22,26 +22,26 @@ async function getStreamFromURL(url) {
     return response.data;
 }
 
-export const config = {
+const config = {
     name: "antichangeinfobox",
     aliases: ["aci", "infoboxmonitor"],
     description: "Monitors thread property changes, saves initial settings, detects unauthorized changes, warns users, kicks offenders, and reverts changes.",
     usage: "[query]",
     cooldown: 3,
-    permissions: [1, 2],
+    permissions: [0, 1, 2],
     isAbsolute: false,
     isHidden: false,
-    credits: "coffee",
+    credits: "XaviaTeam",
     extra: {
         defaultAvatar: DEFAULTS.avatar,
         defaultTheme: DEFAULTS.theme,
         threadNames: DEFAULTS.threadNames
-    }
+    },
 };
 
 /** @type {TOnCallCommand} */
-export async function onCall({ message, balance, api, event, threadsData, role }) {
-    const { threadID, logMessageType, logMessageData, author } = event;
+async function onCall({ message, balance, api, event }) {
+    const { threadID, logMessageType, author } = event;
 
     const revertChanges = async (property, newValue) => {
         switch (property) {
@@ -63,40 +63,40 @@ export async function onCall({ message, balance, api, event, threadsData, role }
     try {
         switch (logMessageType) {
             case "log:thread-image":
-                if (role < 1 && api.getCurrentUserID() !== author) {
-                    api.sendMessage("Unauthorized change detected in thread avatar. The bot will remove the user from the group.", threadID);
-                    await kickUser(api, author, threadID);
-                    await revertChanges("avatar", DEFAULTS.avatar);
-                }
+                api.sendMessage("Unauthorized change detected in thread avatar. The bot will revert this change.", threadID);
+                await revertChanges("avatar", DEFAULTS.avatar);
                 break;
 
             case "log:thread-name":
                 if (DEFAULTS.threadNames[threadID]) {
-                    if (role < 1 && api.getCurrentUserID() !== author) {
-                        api.sendMessage("Unauthorized change detected in thread name. The bot will remove the user from the group.", threadID);
-                        await kickUser(api, author, threadID);
-                        await revertChanges("name", DEFAULTS.threadNames[threadID]);
-                    }
+                    api.sendMessage("Unauthorized change detected in thread name. The bot will revert this change.", threadID);
+                    await revertChanges("name", DEFAULTS.threadNames[threadID]);
                 }
                 break;
 
             case "log:thread-color":
-                if (role < 1 && api.getCurrentUserID() !== author) {
-                    api.sendMessage("Unauthorized change detected in thread theme. The bot will remove the user from the group.", threadID);
-                    await kickUser(api, author, threadID);
-                    await revertChanges("theme", DEFAULTS.theme);
-                }
+                api.sendMessage("Unauthorized change detected in thread theme. The bot will revert this change.", threadID);
+                await revertChanges("theme", DEFAULTS.theme);
                 break;
 
             case "log:thread-icon":
-                if (role < 1 && api.getCurrentUserID() !== author) {
-                    api.sendMessage("Unauthorized change detected in thread emoji. The bot will remove the user from the group.", threadID);
-                    await kickUser(api, author, threadID);
-                    await revertChanges("emoji", DEFAULTS.emoji);
-                }
+                api.sendMessage("Unauthorized change detected in thread emoji. The bot will revert this change.", threadID);
+                await revertChanges("emoji", DEFAULTS.emoji);
                 break;
         }
     } catch (error) {
         console.error("Error in onEvent:", error);
     }
 }
+
+/** @type {TReplyCallback} */
+async function onReply({ message, balance, getLang, data, xDB, eventData }) {
+    // Handle replies if necessary
+}
+
+/** @type {TReactCallback} */
+async function onReaction({ message, balance, getLang, data, xDB, eventData }) {
+    // Handle reactions if necessary
+}
+
+export { config, onCall };
