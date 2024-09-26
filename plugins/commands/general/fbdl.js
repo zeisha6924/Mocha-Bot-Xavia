@@ -2,6 +2,9 @@ import samirapi from 'samirapi';
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { statSync } from 'fs';
+
+const _48MB = 48 * 1024 * 1024;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cachePath = './plugins/commands/cache';
@@ -13,55 +16,67 @@ const config = {
     usage: "[video URL]",
     cooldown: 5,
     permissions: [1, 2],
-    isAbsolute: false,
-    isHidden: false,
     credits: "XaviaTeam",
 };
 
 const langData = {
-    lang_1: { message: "Downloading Facebook video, please wait..." },
-    lang_2: { message: "Video download in progress..." },
+    "en_US": {
+        "missingUrl": "Please provide a Facebook video URL.",
+        "fileTooLarge": "File is too large, max size is 48MB.",
+        "error": "An error occurred while downloading the video."
+    },
+    // Add more languages if needed
 };
 
 /** @type {TOnCallCommand} */
 async function onCall({ message, args, getLang }) {
-    if (!args[0]) {
-        return message.send("Please provide a Facebook video URL.");
-    }
-
-    const videoUrl = args[0];
-    const filePath = path.join(cachePath, 'facebook_video.mp4'); // Define the path for the downloaded video
-
+    let filePath;
     try {
-        // Notify the user about the processing
-        const sendingMessage = getLang("lang_1.message") || "Processing your request...";
-        await message.send(sendingMessage);
+        if (!args[0]) return message.send(getLang('missingUrl'));
+        const videoUrl = args[0];
 
+        message.react("⏳");
+        
         // Attempt to download the video
         const data = await samirapi.facebook(videoUrl);
 
-        // Check if the download URL is present
         if (data && data.downloadUrl) {
+            filePath = path.join(cachePath, 'facebook_video.mp4'); // Define the path for the downloaded video
+
             // Download the video file
-            const videoBuffer = await samirapi.download(data.downloadUrl); // Ensure this function returns a buffer
+            const videoBuffer = await samirapi.download(data.downloadUrl);
 
             // Save the video file to the specified path
             await fs.outputFile(filePath, videoBuffer);
 
-            // Send the video to the user
+            // Check the file size
+            const fileStat = statSync(filePath);
+            if (fileStat.size > _48MB) {
+                await fs.unlink(filePath); // Cleanup if file is too large
+                return message.send(getLang('fileTooLarge'));
+            }
+
+            message.react("✅");
             await message.send({
                 body: "Here is your video:",
                 attachment: fs.createReadStream(filePath) // Send the saved video file
             });
-
-            // Cleanup: Delete the file after sending
-            await fs.unlink(filePath);
         } else {
-            await message.send("Sorry, I couldn't retrieve the video. Please check the URL and ensure it is a valid Facebook video link.");
+            return message.send(getLang('error'));
         }
     } catch (error) {
+        message.react("❌");
         console.error("Error downloading video:", error);
-        await message.send(`An error occurred while trying to download the video: ${error.message || error}`);
+        await message.send(`${getLang('error')} Details: ${error.message || error}`);
+    } finally {
+        // Cleanup: Delete the file after sending or if an error occurred
+        try {
+            if (filePath && await fs.pathExists(filePath)) {
+                await fs.unlink(filePath);
+            }
+        } catch (e) {
+            console.error("Error cleaning up:", e);
+        }
     }
 }
 
@@ -78,5 +93,6 @@ async function onReaction({ message }) {
 // Exporting the config and command handler as specified
 export default {
     config,
+    langData,
     onCall,
 };
