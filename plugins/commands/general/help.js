@@ -9,15 +9,6 @@ const config = {
 
 const langData = {
     "en_US": {
-        "help.list": `
-━━━━━━━━━━━━━━━━
-𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
-╭─╼━━━━━━━━╾─╮
-{list}
-╰─━━━━━━━━━╾─╯
--help <command name>
-𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
-━━━━━━━━━━━━━━━━`,
         "help.commandNotExists": "Command {command} does not exist.",
         "help.commandDetails": `
 ━━━━━━━━━━━━━━━━
@@ -42,7 +33,7 @@ function getCommandName(commandName) {
     return null;
 }
 
-async function onCall({ message, args, getLang, userPermissions, prefix, data }) {
+async function onCall({ message, args, userPermissions, prefix, data }) {
     const { commandsConfig } = global.plugins;
     const commandName = args[0]?.toLowerCase();
 
@@ -62,27 +53,28 @@ async function onCall({ message, args, getLang, userPermissions, prefix, data })
             .map(category => commands[category].map(cmd => `│ ${prefix}${cmd}`).join("\n"))
             .join("\n");
 
-        const responseMessage = getLang("help.list", {
-            list,
-            syntax: prefix
-        });
+        const responseMessage = `
+━━━━━━━━━━━━━━━━
+𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
+╭─╼━━━━━━━━╾─╮
+{list}
+╰─━━━━━━━━━╾─╯
+-help <command name>
+𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
+━━━━━━━━━━━━━━━━`.replace("{list}", list);
 
-        message.reply(responseMessage.replace("{list}", list));
+        message.reply(responseMessage);
     } else {
         const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
-        if (!command) return message.reply(getLang("help.commandNotExists", { command: commandName }));
+        if (!command) return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
 
         const isHidden = !!command.isHidden;
         const isUserValid = !!command.isAbsolute ? global.config?.ABSOLUTES.some(e => e == message.senderID) : true;
         const isPermissionValid = command.permissions.some(p => userPermissions.includes(p));
         if (isHidden || !isUserValid || !isPermissionValid)
-            return message.reply(getLang("help.commandNotExists", { command: commandName }));
+            return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
 
-        message.reply(getLang("help.commandDetails", {
-            name: command.name,
-            description: command.description || 'No description provided.',
-            usage: `${prefix}${commandName} ${command.usage || ''}`
-        }).replace(/^ +/gm, ''));
+        message.reply(langData['en_US']["help.commandDetails"].replace("{name}", command.name).replace("{description}", command.description || 'No description provided.').replace("{usage}", `${prefix}${commandName} ${command.usage || ''}`).replace(/^ +/gm, ''));
     }
 }
 
