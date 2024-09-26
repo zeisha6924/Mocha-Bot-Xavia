@@ -12,17 +12,22 @@ const config = {
 };
 
 /** @type {TOnCallCommand} */
-async function onCall({ message, args }) {
+async function onCall({ message, args, getLang }) {
+    // Ensure the message object has senderID
+    if (!message || !message.senderID) {
+        return console.error("Message object is missing or improperly structured.");
+    }
+
     // Check if the user has permission
     if (!["100005954550355"].includes(message.senderID)) {
         return message.send(
-            "You don't have enough permission to use this command. Only Coffee can do it."
+            getLang("You don't have enough permission to use this command. Only Coffee can do it.")
         );
     }
 
     const name = args.join(" ");
     if (!name) {
-        return message.send("Please provide the file name.");
+        return message.send(getLang("Please provide the file name."));
     }
 
     try {
@@ -30,7 +35,7 @@ async function onCall({ message, args }) {
         const fileContent = fs.readFileSync(filePath, "utf8");
         message.send(fileContent);
     } catch (error) {
-        message.send("File not found!");
+        message.send(getLang("File not found!"));
     }
 }
 
