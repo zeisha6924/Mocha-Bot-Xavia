@@ -33,33 +33,35 @@ async function onCall({ message, args, getLang }) {
     let filePath;
     try {
         if (!args[0]) return message.send(getLang('missingUrl'));
-        const videoUrl = args[0];
 
+        const videoUrl = args[0];
         message.react("⏳");
         
-        // Attempt to download the video
+        // Attempt to fetch the video download data
         const data = await samirapi.facebook(videoUrl);
 
-        if (data && Array.isArray(data.downloadUrl) && data.downloadUrl.length > 0) {
-            filePath = path.join(cachePath, 'facebook_video.mp4'); // Define the path for the downloaded video
+        // Validate the download URL
+        const downloadUrls = data?.downloadUrl;
+        if (Array.isArray(downloadUrls) && downloadUrls.length > 0) {
+            filePath = path.join(cachePath, 'facebook_video.mp4');
 
-            // Download the video file from the first URL in the array
-            const videoBuffer = await samirapi.download(data.downloadUrl[0]);
+            // Download the video using the first URL in the array
+            const videoBuffer = await samirapi.download(downloadUrls[0]);
 
-            // Save the video file to the specified path
+            // Save the video to the specified path
             await fs.outputFile(filePath, videoBuffer);
 
-            // Check the file size
+            // Check the file size before sending
             const fileStat = statSync(filePath);
             if (fileStat.size > _48MB) {
-                await fs.unlink(filePath); // Cleanup if file is too large
+                await fs.unlink(filePath); // Clean up if file is too large
                 return message.send(getLang('fileTooLarge'));
             }
 
             message.react("✅");
             await message.send({
                 body: "Here is your video:",
-                attachment: fs.createReadStream(filePath) // Send the saved video file
+                attachment: fs.createReadStream(filePath)
             });
         } else {
             return message.send(getLang('error'));
@@ -69,13 +71,13 @@ async function onCall({ message, args, getLang }) {
         console.error("Error downloading video:", error);
         await message.send(`${getLang('error')} Details: ${error.message || error}`);
     } finally {
-        // Cleanup: Delete the file after sending or if an error occurred
+        // Cleanup: Ensure the file is deleted after the process
         try {
             if (filePath && await fs.pathExists(filePath)) {
                 await fs.unlink(filePath);
             }
-        } catch (e) {
-            console.error("Error cleaning up:", e);
+        } catch (cleanupError) {
+            console.error("Error during cleanup:", cleanupError);
         }
     }
 }
@@ -90,7 +92,6 @@ async function onReaction({ message }) {
     // Handle reaction events if needed
 }
 
-// Exporting the config and command handler as specified
 export default {
     config,
     langData,
