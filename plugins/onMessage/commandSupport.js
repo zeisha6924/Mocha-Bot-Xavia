@@ -19,24 +19,25 @@ async function loadCommand(filePath) {
 
 async function onCall({ message }) {
     const input = message.body.trim().toLowerCase();
-    const commandEntry = commandFiles.find(({ name }) => input.startsWith(name));
-
-    // Get the actual prefix dynamically
     const actualPrefix = message.thread?.data?.prefix || global.config.PREFIX;
+
+    // Ensure to check against commands with the actual prefix
+    const commandEntry = commandFiles.find(({ name }) => input.startsWith(`${name} `) || input === name);
 
     if (commandEntry) {
         const { path, name } = commandEntry;
         const command = await loadCommand(path);
 
         if (command && command.config) {
-            const args = input.slice(name.length).trim().split(" ");
+            // Remove the prefix and command name from input
+            const args = input.replace(`${name} `, '').trim().split(" ");
 
             // Pass the actual prefix in the data object
             await command.onCall({
                 message,
                 args,
                 getLang: (key) => key, // Placeholder for getLang function, modify as needed
-                data: { thread: { data: { prefix: actualPrefix } } }, // Pass the prefix correctly
+                data: { thread: { data: { prefix: actualPrefix } } },
                 userPermissions: message.senderID, // Assuming senderID is used for permissions
                 prefix: actualPrefix // Pass the prefix directly to commands
             });
