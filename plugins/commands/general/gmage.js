@@ -14,7 +14,7 @@ const config = {
     description: "Search Images using Google Image Search",
     usage: "[query]",
     cooldown: 5,
-    permissions: [1, 2], // Updated permissions
+    permissions: [1, 2],
     isAbsolute: false,
     isHidden: false,
     credits: "coffee",
@@ -41,24 +41,16 @@ const onCall = async ({ message, args }) => {
             },
         });
 
-        const images = response.data.items.slice(0, 9); // Limit to the first 9 images
-
-        // Fill the rest with null values if there are fewer than 9 images
-        while (images.length < 9) {
-            images.push(null);
-        }
-
-        let imagesDownloaded = 0;
-
+        const images = response.data.items.slice(0, 9);
+        
         for (const image of images) {
-            if (!image) continue; // Skip null values
+            if (!image) continue;
 
             const imageUrl = image.link;
 
             try {
-                const imageResponse = await axios.head(imageUrl); // Check if the image URL is valid
-
-                // Validate the image
+                const imageResponse = await axios.head(imageUrl);
+                
                 if (imageResponse.headers['content-type'].startsWith('image/')) {
                     const response = await axios({
                         method: 'get',
@@ -72,27 +64,23 @@ const onCall = async ({ message, args }) => {
                     response.data.pipe(writer);
 
                     await new Promise((resolve, reject) => {
-                        writer.on('finish', resolve);
+                        writer.on('finish', () => {
+                            imgData.push(fs.createReadStream(outputFileName));
+                            resolve();
+                        });
                         writer.on('error', reject);
                     });
-
-                    imgData.push(outputFileName); // Store file paths instead of streams
-                    imagesDownloaded++;
                 } else {
                     console.error(`Invalid image (${imageUrl}): Content type is not recognized as an image.`);
                 }
             } catch (error) {
                 console.error(`Error downloading image (${imageUrl}):`, error);
-                continue; // Skip the current image if there's an error
             }
         }
 
-        if (imagesDownloaded > 0) {
-            // Send images as attachments
+        if (imgData.length > 0) {
             await message.send({ attachment: imgData });
-
-            // Clean up local copies after sending
-            await Promise.all(imgData.map(img => fs.remove(img)));
+            await Promise.all(imgData.map(img => fs.remove(img.path)));
         } else {
             message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)');
         }
