@@ -61,7 +61,7 @@ async function onCall({ message, args, getLang }) {
         }
     } catch (error) {
         console.error("Error downloading video:", error);
-        await message.send("An error occurred while trying to download the video. Please try again later.");
+        await message.send(`An error occurred while trying to download the video: ${error.message || error}`);
     }
 }
 
