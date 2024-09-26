@@ -1,4 +1,10 @@
 import samirapi from 'samirapi';
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const cachePath = './plugins/commands/cache';
 
 const config = {
     name: "fbdl",
@@ -24,22 +30,38 @@ async function onCall({ message, args, getLang }) {
     }
 
     const videoUrl = args[0];
-    
+    const filePath = path.join(cachePath, 'facebook_video.mp4'); // Define the path for the downloaded video
+
     try {
-        // Ensure the message being sent is valid
-        const sendingMessage = getLang("message") || "Processing your request...";
+        // Notify the user about the processing
+        const sendingMessage = getLang("lang_1.message") || "Processing your request...";
         await message.send(sendingMessage);
+
+        // Attempt to download the video
         const data = await samirapi.facebook(videoUrl);
 
-        // Assuming 'data' contains the download URL
+        // Check if the download URL is present
         if (data && data.downloadUrl) {
-            await message.send(`Here is your video: ${data.downloadUrl}`);
+            // Download the video file
+            const videoBuffer = await samirapi.download(data.downloadUrl); // Ensure this function returns a buffer
+
+            // Save the video file to the specified path
+            await fs.outputFile(filePath, videoBuffer);
+
+            // Send the video to the user
+            await message.send({
+                body: "Here is your video:",
+                attachment: fs.createReadStream(filePath) // Send the saved video file
+            });
+
+            // Cleanup: Delete the file after sending
+            await fs.unlink(filePath);
         } else {
-            await message.send("Sorry, I couldn't retrieve the video. Please check the URL.");
+            await message.send("Sorry, I couldn't retrieve the video. Please check the URL and ensure it is a valid Facebook video link.");
         }
     } catch (error) {
-        console.error(error);
-        await message.send("An error occurred while trying to download the video.");
+        console.error("Error downloading video:", error);
+        await message.send("An error occurred while trying to download the video. Please try again later.");
     }
 }
 
