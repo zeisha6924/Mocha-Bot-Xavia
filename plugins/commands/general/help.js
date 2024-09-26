@@ -5,7 +5,7 @@ const config = {
     description: "Show all commands or command details",
     usage: "[command] (optional)",
     credits: "XaviaTeam"
-}
+};
 
 const langData = {
     "en_US": {
@@ -30,7 +30,7 @@ const langData = {
         "1": "Group Admin",
         "2": "Bot Admin"
     }
-}
+};
 
 function getCommandName(commandName) {
     if (global.plugins.commandsAliases.has(commandName)) return commandName;
@@ -48,7 +48,7 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
 
     if (!commandName) {
         let commands = {};
-        const language = data?.thread?.data?.language || global.config.LANGUAGE || 'en_US';
+        const language = global.config.LANGUAGE || 'en_US';
         for (const [key, value] of commandsConfig.entries()) {
             if (!!value.isHidden) continue;
             if (!!value.isAbsolute ? !global.config?.ABSOLUTES.some(e => e == message.senderID) : false) continue;
@@ -88,4 +88,4 @@ export default {
     config,
     langData,
     onCall
-}
+};
