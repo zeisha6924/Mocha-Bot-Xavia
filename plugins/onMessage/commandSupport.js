@@ -49,8 +49,7 @@ async function onCall({ message }) {
             return;
         }
     }
-
-    console.log("No valid command found for input:", input);
+    // The function ends without logging anything if no command is found
 }
 
 export default {
