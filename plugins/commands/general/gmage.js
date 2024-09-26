@@ -2,24 +2,24 @@ import path from 'path';
 import fs from 'fs-extra';
 import axios from 'axios';
 
+/** @type {TCommandConfig} */
 const config = {
     name: "gmage",
-    aliases: ["gimg", "gimage"],
-    description: "Search for images on Google based on a query.",
-    usage: "[query] -[number of images]",
+    aliases: ["gimg"],
+    description: "Search Images using Google Image Search",
+    usage: "[query]",
     cooldown: 5,
-    permissions: [1, 2],
+    permissions: [1, 2], // Updated permissions
     isAbsolute: false,
     isHidden: false,
     credits: "coffee",
 };
 
-const cachePath = './plugins/commands/cache';
-
-async function onStart({ message, event, args }) {
+/** @type {TOnCallCommand} */
+const onCall = async ({ message, args }) => {
     try {
         if (args.length === 0) {
-            return message.send('📷 | Follow this format:\n-gmage naruto uzumaki', event.threadID, event.messageID);
+            return message.send('📷 | Follow this format:\n-gmage naruto uzumaki');
         }
 
         const searchQuery = args.join(' ');
@@ -36,17 +36,24 @@ async function onStart({ message, event, args }) {
         });
 
         const images = response.data.items.slice(0, 9); // Limit to the first 9 images
+
+        // Fill the rest with null values if there are fewer than 9 images
+        while (images.length < 9) {
+            images.push(null);
+        }
+
         const imgData = [];
         let imagesDownloaded = 0;
 
         for (const image of images) {
-            if (!image) continue;
+            if (!image) continue; // Skip null values
 
             const imageUrl = image.link;
 
             try {
-                const imageResponse = await axios.head(imageUrl);
+                const imageResponse = await axios.head(imageUrl); // Check if the image URL is valid
 
+                // Validate the image
                 if (imageResponse.headers['content-type'].startsWith('image/')) {
                     const response = await axios({
                         method: 'get',
@@ -54,7 +61,7 @@ async function onStart({ message, event, args }) {
                         responseType: 'stream',
                     });
 
-                    const outputFileName = path.join(cachePath, `downloaded_image_${imgData.length + 1}.png`);
+                    const outputFileName = path.join(__dirname, 'tmp', `downloaded_image_${imgData.length + 1}.png`);
                     const writer = fs.createWriteStream(outputFileName);
 
                     response.data.pipe(writer);
@@ -64,38 +71,33 @@ async function onStart({ message, event, args }) {
                         writer.on('error', reject);
                     });
 
-                    imgData.push({ path: outputFileName });
+                    imgData.push(fs.createReadStream(outputFileName));
                     imagesDownloaded++;
                 } else {
                     console.error(`Invalid image (${imageUrl}): Content type is not recognized as an image.`);
                 }
             } catch (error) {
                 console.error(`Error downloading image (${imageUrl}):`, error);
-                continue;
+                continue; // Skip the current image if there's an error
             }
         }
 
         if (imagesDownloaded > 0) {
-            const attachments = imgData.map(img => fs.createReadStream(img.path));
-            await message.send({ attachment: attachments }, event.threadID, event.messageID);
+            // Send only non-bad images as attachments
+            await message.send({ attachment: imgData });
 
-            // Remove local copies after sending
-            for (const img of imgData) {
-                fs.removeSync(img.path);
-            }
+            // Clean up local copies
+            imgData.forEach((img) => fs.remove(img.path));
         } else {
-            message.send('📷 | Can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
+            message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)');
         }
     } catch (error) {
         console.error(error);
-        return message.send('📷 | Can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
+        return message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)');
     }
-}
+};
 
-async function onCall({ message, event, args }) {
-    await onStart({ message, event, args });
-}
-
+// Exporting the config and command handler
 export default {
     config,
     onCall,
