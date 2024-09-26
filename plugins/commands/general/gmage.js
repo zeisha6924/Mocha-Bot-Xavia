@@ -1,7 +1,6 @@
-import samirapi from 'samirapi';
-import axios from 'axios';
-import fs from 'fs';
 import path from 'path';
+import fs from 'fs-extra';
+import axios from 'axios';
 
 const config = {
     name: "gmage",
@@ -9,7 +8,7 @@ const config = {
     description: "Search for images on Google based on a query.",
     usage: "[query] -[number of images]",
     cooldown: 5,
-    permissions: [1, 2],  // Updated permissions
+    permissions: [1, 2], // Updated permissions
     isAbsolute: false,
     isHidden: false,
     credits: "coffee",
@@ -17,75 +16,90 @@ const config = {
 
 const cachePath = './plugins/commands/cache';
 
-/** @type {TOnCallCommand} */
-async function onCall({ message, args }) {
-    let imageCount = 1; // Default to 1 image
-    const query = args.slice(0, -1).join(" ") || "beautiful landscapes";
-
-    // Extract the number of images if provided
-    const countArg = args[args.length - 1];
-    if (countArg.startsWith('-')) {
-        imageCount = parseInt(countArg.slice(1), 10);
-        if (isNaN(imageCount) || imageCount < 1) {
-            imageCount = 1;  // Default to 1 if invalid
-        } else if (imageCount > 12) {
-            imageCount = 12; // Cap at 12
-        }
-    }
-
+async function onStart({ api, event, args }) {
     try {
-        // Fetch images using Google Image Search via samirapi
-        const images = await samirapi.googleImageSearch(query);
-        console.log(`Google Image Search Results:`, images);
+        if (args.length === 0) {
+            return api.sendMessage('📷 | Follow this format:\n-gmage naruto uzumaki', event.threadID, event.messageID);
+        }
 
-        // Limit the number of images sent to the user
-        const finalImages = images.slice(0, imageCount);
+        const searchQuery = args.join(' ');
+        const apiKey = 'AIzaSyC_gYM4M6Fp1AOYra_K_-USs0SgrFI08V0';
+        const searchEngineID = 'e01c6428089ea4702';
 
-        if (finalImages.length > 0) {
-            const filePaths = [];
+        const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
+            params: {
+                key: apiKey,
+                cx: searchEngineID,
+                q: searchQuery,
+                searchType: 'image',
+            },
+        });
 
-            // Download all images
-            for (let i = 0; i < finalImages.length; i++) {
-                const url = finalImages[i];
-                const filePath = path.join(cachePath, `image${i}.jpg`);
-                const writer = fs.createWriteStream(filePath);
+        const images = response.data.items.slice(0, 9); // Limit to the first 9 images
 
-                const response = await axios({
-                    url,
-                    method: 'GET',
-                    responseType: 'stream',
-                });
+        // Fill with nulls if fewer than 9 images
+        while (images.length < 9) {
+            images.push(null);
+        }
 
-                response.data.pipe(writer);
+        const imgData = [];
+        let imagesDownloaded = 0;
 
-                await new Promise((resolve, reject) => {
-                    writer.on('finish', resolve);
-                    writer.on('error', reject);
-                });
-
-                filePaths.push(filePath);
+        for (const image of images) {
+            if (!image) {
+                continue; // Skip null values
             }
 
-            // Send all images in one message as a direct reply
-            await message.reply({
-                body: `Here are the top ${finalImages.length} images for "${query}".`,
-                attachment: filePaths.map(filePath => fs.createReadStream(filePath))
-            });
+            const imageUrl = image.link;
 
-            // Cleanup: Remove downloaded files
-            filePaths.forEach(filePath => fs.unlinkSync(filePath));
+            try {
+                const imageResponse = await axios.head(imageUrl); // Validate image URL
 
-        } else {
-            await message.reply(`I couldn't find any images for "${query}".`);
+                if (imageResponse.headers['content-type'].startsWith('image/')) {
+                    const response = await axios({
+                        method: 'get',
+                        url: imageUrl,
+                        responseType: 'stream',
+                    });
+
+                    const outputFileName = path.join(cachePath, `downloaded_image_${imgData.length + 1}.png`);
+                    const writer = fs.createWriteStream(outputFileName);
+
+                    response.data.pipe(writer);
+
+                    await new Promise((resolve, reject) => {
+                        writer.on('finish', resolve);
+                        writer.on('error', reject);
+                    });
+
+                    imgData.push(fs.createReadStream(outputFileName));
+                    imagesDownloaded++;
+                } else {
+                    console.error(`Invalid image (${imageUrl}): Content type is not recognized as an image.`);
+                }
+            } catch (error) {
+                console.error(`Error downloading image (${imageUrl}):`, error);
+                continue; // Skip the current image if there's an error
+            }
         }
 
+        if (imagesDownloaded > 0) {
+            // Send only non-bad images as attachments
+            await api.sendMessage({ attachment: imgData }, event.threadID, event.messageID);
+
+            // Remove local copies after sending
+            imgData.forEach((img) => fs.remove(img.path));
+        } else {
+            api.sendMessage('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
+        }
     } catch (error) {
         console.error(error);
-        await message.reply("There was an error accessing Google Images or downloading the images. Please try again later.");
+        return api.sendMessage('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
     }
 }
 
+// Exporting the config and command handler as specified
 export default {
     config,
-    onCall
+    onStart,
 };
