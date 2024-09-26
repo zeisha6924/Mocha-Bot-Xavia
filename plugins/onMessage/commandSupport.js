@@ -17,16 +17,22 @@ async function loadCommand(filePath) {
     }
 }
 
+function getRealPrefix(data) {
+    return data?.thread?.data?.prefix || global.config.PREFIX || "";
+}
+
 async function onCall({ message }) {
+    const prefix = getRealPrefix(message.data); // Get the real prefix
     const input = message.body.trim().toLowerCase();
-    const commandEntry = commandFiles.find(({ name }) => input.startsWith(name));
+
+    const commandEntry = commandFiles.find(({ name }) => input.startsWith(prefix + name));
 
     if (commandEntry) {
         const { path, name } = commandEntry;
         const command = await loadCommand(path);
 
         if (command && command.config) {
-            const args = input.slice(name.length).trim().split(" ");
+            const args = input.slice((prefix + name).length).trim().split(" ");
 
             await command.onCall({
                 message,
