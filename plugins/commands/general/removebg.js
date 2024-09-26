@@ -23,7 +23,7 @@ const langData = {
         notAPhoto: "This is not a photo.",
         processingError: "An error occurred while processing the image.",
         executionError: "An error occurred while executing the command.",
-        successMessage: "Here is the image with the background removed ✅"
+        successMessage: "Here is the image with the background removed"
     }
 };
 
