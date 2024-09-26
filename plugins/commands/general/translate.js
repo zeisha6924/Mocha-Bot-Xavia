@@ -85,7 +85,7 @@ async function onCall({ message, args, getLang, data }) {
 
         reply(`
 ━━━━━━━━━━━━━━━━
-Translate text from ${fromName} to ${toName}
+Translate text from\n${fromName} to ${toName}
 
 🪧 Translated text:
 ▫️${translation}
