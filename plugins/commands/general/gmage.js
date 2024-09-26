@@ -16,10 +16,10 @@ const config = {
 
 const cachePath = './plugins/commands/cache';
 
-async function onStart({ api, event, args }) {
+async function onStart({ message, event, args }) {
     try {
         if (args.length === 0) {
-            return api.sendMessage('📷 | Follow this format:\n-gmage naruto uzumaki', event.threadID, event.messageID);
+            return message.send('📷 | Follow this format:\n-gmage naruto uzumaki', event.threadID, event.messageID);
         }
 
         const searchQuery = args.join(' ');
@@ -85,21 +85,26 @@ async function onStart({ api, event, args }) {
 
         if (imagesDownloaded > 0) {
             // Send only non-bad images as attachments
-            await api.sendMessage({ attachment: imgData }, event.threadID, event.messageID);
+            await message.send({ attachment: imgData }, event.threadID, event.messageID);
 
             // Remove local copies after sending
-            imgData.forEach((img) => fs.remove(img.path));
+            imgData.forEach((img) => fs.removeSync(img.path));
         } else {
-            api.sendMessage('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
+            message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
         }
     } catch (error) {
         console.error(error);
-        return api.sendMessage('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
+        return message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
     }
+}
+
+// The onCall function to handle incoming command requests
+async function onCall({ message, event, args }) {
+    await onStart({ message, event, args });
 }
 
 // Exporting the config and command handler as specified
 export default {
     config,
-    onStart,
+    onCall,
 };
