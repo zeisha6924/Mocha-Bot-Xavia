@@ -1,40 +1,58 @@
-import fs from 'fs';
-import path from 'path';
+const commandFiles = [
+    { path: '../commands/general/ai.js', name: 'ai' },
+    { path: '../commands/general/gemini.js', name: 'gemini' },
+    { path: '../commands/general/gpt.js', name: 'gpt' },
+    { path: '../commands/general/help.js', name: 'help' },
+    { path: '../commands/general/imagine.js', name: 'imagine' },
+    { path: '../commands/general/lyrics.js', name: 'lyrics' },
+    { path: '../commands/general/pinterest.js', name: 'pinterest' },
+    { path: '../commands/general/remini.js', name: 'remini' },
+    { path: '../commands/general/spotify.js', name: 'spotify' },
+    { path: '../commands/general/tid.js', name: 'tid' },
+    { path: '../commands/general/translate.js', name: 'translate' },
+    { path: '../commands/general/uid.js', name: 'uid' },
+    { path: '../commands/general/unsend.js', name: 'unsend' },
+    // Add future commands here
+];
 
-const commandFiles = fs.readdirSync('./plugins/commands/general')
-    .filter(file => file.endsWith('.js'));
+async function loadCommand(filePath) {
+    try {
+        const commandModule = await import(filePath);
+        return commandModule.default; // Return the default export of the command
+    } catch (error) {
+        console.error(`Failed to load command script from ${filePath}:`, error);
+        return null; // Return null if loading fails
+    }
+}
 
-const commands = commandFiles.map(file => {
-    return require(path.join(__dirname, '../commands/general', file)).default;
-});
-
-// Function to handle incoming messages and check for commands
-export default function onMessage({ message }) {
+async function onCall({ message }) {
     const input = message.body.trim();
-    const commandPrefix = input.split(" ")[0].toLowerCase(); // Extract command from input
 
-    // Loop through each command to check if it starts with the command name
-    commands.forEach(command => {
-        const commandName = command.config?.name?.toLowerCase(); // Use optional chaining
+    for (const { path, name } of commandFiles) {
+        // Check if the input starts with the command name
+        if (input.toLowerCase().startsWith(name)) {
+            const command = await loadCommand(path);
 
-        if (commandName && input.toLowerCase().startsWith(commandName)) {
-            // Extract the arguments after the command name
-            const args = input.slice(commandName.length).trim().split(/ +/); // Split by spaces
+            if (command && command.config) {
+                const args = input.slice(name.length).trim().split(" "); // Get the arguments for the command
 
-            // Check if the command has an onCall function
-            if (typeof command.onCall === 'function') {
-                command.onCall({ message, args }); // Call the command's onCall function
-            } else {
-                // If no onCall function exists, handle the command directly
-                if (command.handle) {
-                    command.handle({ message }); // Call a handle function if it exists
-                }
-            }
-        } else if (!command.config) {
-            // Handle commands without a config object directly
-            if (typeof command === 'function') {
-                command({ message }); // Directly call the command if it's a function
+                // Call the command's onCall function
+                await command.onCall({
+                    message,
+                    args,
+                    getLang: (key) => key, // Placeholder for getLang function, modify as needed
+                    data: {}, // Add relevant data if required
+                    userPermissions: message.senderID, // Assuming senderID is used for permissions
+                });
+                return; // Exit after processing the command
             }
         }
-    });
+    }
+
+    // If no command was found, you can send a default message or perform another action
+    console.log("No valid command found for input:", input);
 }
+
+export default {
+    onCall
+};
