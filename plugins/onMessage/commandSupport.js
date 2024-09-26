@@ -1,14 +1,11 @@
 const commandFiles = [
-
     'ai', 'gemini', 'gpt', 'help', 'imagine', 'lyrics', 'pinterest', 
     'remini', 'spotify', 'tid', 'translate', 'uid', 'unsend',
-    //  ⬆️ Add or Edit the command names that you want to work without prefix
-
-// Change The Directory Path for the commands you want to be non-prefix ⬇️
+    'removebg', // Add more command names that import samirapi
 ].map(name => ({
     path: `../commands/general/${name}.js`,
     name
-})); 
+}));
 
 async function loadCommand(filePath) {
     try {
@@ -33,14 +30,22 @@ async function onCall({ message }) {
         if (command && command.config) {
             const args = input.slice(name.length).trim().split(" ");
 
-            await command.onCall({
+            // Pass in `samirapi` if it's used in the command
+            const commandParams = {
                 message,
                 args,
                 getLang: (key) => key,
                 data: { thread: { data: { prefix: actualPrefix } } },
                 userPermissions: message.senderID,
                 prefix: actualPrefix
-            });
+            };
+
+            // Check if the command module uses samirapi and adjust params accordingly
+            if (command.onCall) {
+                await command.onCall(commandParams);
+            } else {
+                console.warn(`No onCall function defined for command: ${name}`);
+            }
             return;
         }
     }
