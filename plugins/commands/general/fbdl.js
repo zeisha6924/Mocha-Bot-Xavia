@@ -40,11 +40,11 @@ async function onCall({ message, args, getLang }) {
         // Attempt to download the video
         const data = await samirapi.facebook(videoUrl);
 
-        if (data && data.downloadUrl) {
+        if (data && Array.isArray(data.downloadUrl) && data.downloadUrl.length > 0) {
             filePath = path.join(cachePath, 'facebook_video.mp4'); // Define the path for the downloaded video
 
-            // Download the video file
-            const videoBuffer = await samirapi.download(data.downloadUrl);
+            // Download the video file from the first URL in the array
+            const videoBuffer = await samirapi.download(data.downloadUrl[0]);
 
             // Save the video file to the specified path
             await fs.outputFile(filePath, videoBuffer);
