@@ -25,16 +25,16 @@ async function loadCommand(filePath) {
     }
 }
 
-async function onCall({ message }) {
+async function onCall({ message, prefix }) {
     const input = message.body.trim();
 
     for (const { path, name } of commandFiles) {
-        // Check if the input starts with the command name
-        if (input.toLowerCase().startsWith(name)) {
+        // Check if the input starts with the prefix followed by the command name
+        if (input.toLowerCase().startsWith(`${prefix}${name}`)) {
             const command = await loadCommand(path);
 
             if (command && command.config) {
-                const args = input.slice(name.length).trim().split(" "); // Get the arguments for the command
+                const args = input.slice(`${prefix}${name}`.length).trim().split(" "); // Get the arguments for the command
 
                 // Call the command's onCall function
                 await command.onCall({
@@ -43,6 +43,7 @@ async function onCall({ message }) {
                     getLang: (key) => key, // Placeholder for getLang function, modify as needed
                     data: {}, // Add relevant data if required
                     userPermissions: message.senderID, // Assuming senderID is used for permissions
+                    prefix // Pass the prefix to the command
                 });
                 return; // Exit after processing the command
             }
