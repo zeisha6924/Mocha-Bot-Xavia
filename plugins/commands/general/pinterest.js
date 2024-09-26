@@ -115,14 +115,7 @@ async function onCall({ message, args }) {
     }
 }
 
-/** @type {TReplyCallback} */
-async function onReply({ message }) {
-    // Handle replies to the bot's message
-}
-
-/** @type {TReactCallback} */
-async function onReaction({ message }) {
-    // Handle reactions to the bot's message
-}
-
-export { config, onCall };
+export default {
+    config,
+    onCall
+};
