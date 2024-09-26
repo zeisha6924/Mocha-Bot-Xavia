@@ -1,11 +1,6 @@
-import path from 'path';
-import fs from 'fs-extra';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
-
-// Define __dirname for ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import path from 'path';
 
 /** @type {TCommandConfig} */
 const config = {
@@ -20,9 +15,12 @@ const config = {
     credits: "coffee",
 };
 
+// Define __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {TOnCallCommand} */
 const onCall = async ({ message, args }) => {
-    const imgData = [];
     try {
         if (args.length === 0) {
             return message.send('📷 | Follow this format:\n-gmage naruto uzumaki');
@@ -41,46 +39,31 @@ const onCall = async ({ message, args }) => {
             },
         });
 
-        const images = response.data.items.slice(0, 9);
-        
-        for (const image of images) {
-            if (!image) continue;
+        const images = response.data.items.slice(0, 9); // Limit to the first 9 images
+        const imgData = []; // To store valid image URLs
 
+        for (const image of images) {
             const imageUrl = image.link;
+            console.log(`Image URL: ${imageUrl}`); // Log the image URL to the console
 
             try {
-                const imageResponse = await axios.head(imageUrl);
-                
+                const imageResponse = await axios.head(imageUrl); // Check if the image URL is valid
+
+                // Validate the image
                 if (imageResponse.headers['content-type'].startsWith('image/')) {
-                    const response = await axios({
-                        method: 'get',
-                        url: imageUrl,
-                        responseType: 'stream',
-                    });
-
-                    const outputFileName = path.join(__dirname, '../cache', `downloaded_image_${imgData.length + 1}.png`);
-                    const writer = fs.createWriteStream(outputFileName);
-
-                    response.data.pipe(writer);
-
-                    await new Promise((resolve, reject) => {
-                        writer.on('finish', () => {
-                            imgData.push(fs.createReadStream(outputFileName));
-                            resolve();
-                        });
-                        writer.on('error', reject);
-                    });
+                    imgData.push(imageUrl); // Store valid image URLs
                 } else {
                     console.error(`Invalid image (${imageUrl}): Content type is not recognized as an image.`);
                 }
             } catch (error) {
-                console.error(`Error downloading image (${imageUrl}):`, error);
+                console.error(`Error validating image (${imageUrl}):`, error);
+                continue; // Skip the current image if there's an error
             }
         }
 
         if (imgData.length > 0) {
+            // Send images as attachments
             await message.send({ attachment: imgData });
-            await Promise.all(imgData.map(img => fs.remove(img.path)));
         } else {
             message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)');
         }
