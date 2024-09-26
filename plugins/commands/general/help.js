@@ -23,7 +23,7 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
 
     if (!commandName) {
         let commands = {};
-        const language = data?.thread?.data?.language || global.config.LANGUAGE || 'en_US';
+        const language = message?.thread?.data?.language || global.config.LANGUAGE || 'en_US';
 
         for (const [key, value] of commandsConfig.entries()) {
             if (value.isHidden) continue;
@@ -44,7 +44,7 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
 ╭─╼━━━━━━━━╾─╮
 ${list}
 ╰─━━━━━━━━━╾─╯
--help <command name>
+${prefix}help <command name>
 𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
 ━━━━━━━━━━━━━━━━`);
     } else {
@@ -54,7 +54,7 @@ ${list}
         const isHidden = command.isHidden;
         const isUserValid = !command.isAbsolute || global.config?.ABSOLUTES.some(e => e == message.senderID);
         const isPermissionValid = command.permissions.some(p => userPermissions.includes(p));
-
+        
         if (isHidden || !isUserValid || !isPermissionValid)
             return message.reply(`Command ${commandName} does not exist.`);
 
