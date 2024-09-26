@@ -9,7 +9,7 @@ const cachePath = './plugins/commands/cache';
 const config = {
     name: "removebg",
     version: "1.0.0",
-    permissions: [1, 2], // Updated permissions
+    permissions: [0, 1, 2], // Updated permissions
     credits: "XaviaTeam",
     description: "Removes the background from an image.",
     commandCategory: "Images",
@@ -23,7 +23,7 @@ const langData = {
         "notAPhoto": "This is not a photo.",
         "processingError": "An error occurred while processing the image.",
         "executionError": "An error occurred while executing the command.",
-        "successMessage": "Here is the image with the background removed ✅"
+        "successMessage": "Here is the image with the background removed"
     }
 };
 
