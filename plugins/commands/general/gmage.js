@@ -6,7 +6,7 @@ import path from 'path';
 const config = {
     name: "gmage",
     aliases: ["gimg", "gimage"],
-    description: "Search for images based on a query.",
+    description: "Search for images on Google based on a query.",
     usage: "[query] -[number of images]",
     cooldown: 5,
     permissions: [1, 2],  // Updated permissions
@@ -20,7 +20,7 @@ const cachePath = './plugins/commands/cache';
 /** @type {TOnCallCommand} */
 async function onCall({ message, args }) {
     let imageCount = 1; // Default to 1 image
-    const query = args.slice(0, -1).join(" ") || "default image search";
+    const query = args.slice(0, -1).join(" ") || "beautiful landscapes";
 
     // Extract the number of images if provided
     const countArg = args[args.length - 1];
@@ -33,40 +33,13 @@ async function onCall({ message, args }) {
         }
     }
 
-    // Prepare to fetch images
-    const allImages = [];
-    let fetchedImagesCount = 0;
-
     try {
-        // Fetch images in increments of 6 (two requests max)
-        while (fetchedImagesCount < imageCount) {
-            const remaining = imageCount - fetchedImagesCount;
-            const fetchLimit = Math.min(6, remaining); // Only fetch up to 6 at a time
-
-            // First request
-            const images1 = await samirapi.searchImages(query);
-            console.log(`Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images1.result.length}):`, images1);
-            if (images1.result) {
-                allImages.push(...images1.result.slice(0, fetchLimit));
-                fetchedImagesCount += images1.result.length;
-            }
-
-            if (fetchedImagesCount < imageCount) {
-                // Second request with query + 1 for more results
-                const images2 = await samirapi.searchImages(`${query} 1`);
-                console.log(`Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images2.result.length}):`, images2);
-                if (images2.result) {
-                    allImages.push(...images2.result.slice(0, fetchLimit));
-                    fetchedImagesCount += images2.result.length;
-                }
-            }
-
-            // Break if no more images found
-            if (fetchedImagesCount >= imageCount) break;
-        }
+        // Fetch images using Google Image Search via samirapi
+        const images = await samirapi.googleImageSearch(query);
+        console.log(`Google Image Search Results:`, images);
 
         // Limit the number of images sent to the user
-        const finalImages = allImages.slice(0, imageCount);
+        const finalImages = images.slice(0, imageCount);
 
         if (finalImages.length > 0) {
             const filePaths = [];
@@ -108,7 +81,7 @@ async function onCall({ message, args }) {
 
     } catch (error) {
         console.error(error);
-        await message.reply("There was an error accessing the image service or downloading the images. Please try again later.");
+        await message.reply("There was an error accessing Google Images or downloading the images. Please try again later.");
     }
 }
 
