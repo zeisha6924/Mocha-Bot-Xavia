@@ -5,7 +5,7 @@ const config = {
     description: "Show all commands or command details",
     usage: "[command] (optional)",
     credits: "XaviaTeam"
-};
+}
 
 const langData = {
     "en_US": {
@@ -30,7 +30,7 @@ const langData = {
         "1": "Group Admin",
         "2": "Bot Admin"
     }
-};
+}
 
 function getCommandName(commandName) {
     if (global.plugins.commandsAliases.has(commandName)) return commandName;
@@ -42,13 +42,13 @@ function getCommandName(commandName) {
     return null;
 }
 
-async function onCall({ message, args, getLang, userPermissions, prefix }) {
+async function onCall({ message, args, getLang, userPermissions, prefix, data }) {
     const { commandsConfig } = global.plugins;
     const commandName = args[0]?.toLowerCase();
 
     if (!commandName) {
         let commands = {};
-        const language = global.config.LANGUAGE || 'en_US';
+        const language = data?.thread?.data?.language || global.config.LANGUAGE || 'en_US';
         for (const [key, value] of commandsConfig.entries()) {
             if (!!value.isHidden) continue;
             if (!!value.isAbsolute ? !global.config?.ABSOLUTES.some(e => e == message.senderID) : false) continue;
@@ -62,10 +62,12 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
             .map(category => commands[category].map(cmd => `│ ${prefix}${cmd}`).join("\n"))
             .join("\n");
 
-        message.reply(getLang("help.list", {
+        const responseMessage = getLang("help.list", {
             list,
             syntax: prefix
-        }));
+        });
+
+        message.reply(responseMessage.replace("{list}", list));
     } else {
         const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
         if (!command) return message.reply(getLang("help.commandNotExists", { command: commandName }));
@@ -88,4 +90,4 @@ export default {
     config,
     langData,
     onCall
-};
+}
