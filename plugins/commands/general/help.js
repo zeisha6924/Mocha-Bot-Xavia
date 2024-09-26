@@ -17,7 +17,7 @@ function getCommandName(commandName) {
     return null;
 }
 
-async function onCall({ message, args, getLang, userPermissions, prefix }) {
+async function onCall({ message, args, userPermissions, prefix }) {
     const { commandsConfig } = global.plugins;
     const commandName = args[0]?.toLowerCase();
 
@@ -31,11 +31,11 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
             if (!value.permissions?.some(p => userPermissions.includes(p))) continue;
 
             if (!commands[value.category]) commands[value.category] = [];
-            commands[value.category].push(`${prefix}${value._name?.[language] || key}`);
+            commands[value.category].push(value._name?.[language] || key);
         }
 
         const list = Object.keys(commands)
-            .map(category => commands[category].map(cmd => `│ ${cmd}`).join("\n"))
+            .map(category => commands[category].map(cmd => `│ ${prefix}${cmd}`).join("\n"))
             .join("\n");
 
         message.reply(`
