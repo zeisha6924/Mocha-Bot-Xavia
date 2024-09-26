@@ -1,49 +1,118 @@
 import samirapi from 'samirapi';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 const config = {
     name: "gmage",
-    aliases: ["googleimage"],
-    description: "Search for images on Google.",
-    usage: "[query]",
+    aliases: ["gimg", "gimage"],
+    description: "Search for images based on a query.",
+    usage: "[query] -[number of images]",
     cooldown: 5,
-    permissions: [1, 2], // Updated permissions
+    permissions: [1, 2],  // Updated permissions
     isAbsolute: false,
     isHidden: false,
-    credits: "XaviaTeam",
-    extra: {
-        extraProp: "This is an extra property",
-    },
+    credits: "coffee",
 };
 
-/** @type {TOnCallCommand} */
-async function onCall({ message, args, getLang, userPermissions, prefix }) {
-    const query = args.join(" "); // Join arguments to form the search query
+const cachePath = './plugins/commands/cache';
 
-    if (!query) {
-        return message.send(getLang("usage", { prefix, command: config.name }));
+/** @type {TOnCallCommand} */
+async function onCall({ message, args }) {
+    let imageCount = 1; // Default to 1 image
+    const query = args.slice(0, -1).join(" ") || "default image search";
+
+    // Extract the number of images if provided
+    const countArg = args[args.length - 1];
+    if (countArg.startsWith('-')) {
+        imageCount = parseInt(countArg.slice(1), 10);
+        if (isNaN(imageCount) || imageCount < 1) {
+            imageCount = 1;  // Default to 1 if invalid
+        } else if (imageCount > 12) {
+            imageCount = 12; // Cap at 12
+        }
     }
 
+    // Prepare to fetch images
+    const allImages = [];
+    let fetchedImagesCount = 0;
+
     try {
-        const images = await samirapi.googleImageSearch(query);
-        
-        // Check if images were returned
-        if (images.length === 0) {
-            return message.send(getLang("noImagesFound"));
+        // Fetch images in increments of 6 (two requests max)
+        while (fetchedImagesCount < imageCount) {
+            const remaining = imageCount - fetchedImagesCount;
+            const fetchLimit = Math.min(6, remaining); // Only fetch up to 6 at a time
+
+            // First request
+            const images1 = await samirapi.searchImages(query);
+            console.log(`Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images1.result.length}):`, images1);
+            if (images1.result) {
+                allImages.push(...images1.result.slice(0, fetchLimit));
+                fetchedImagesCount += images1.result.length;
+            }
+
+            if (fetchedImagesCount < imageCount) {
+                // Second request with query + 1 for more results
+                const images2 = await samirapi.searchImages(`${query} 1`);
+                console.log(`Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images2.result.length}):`, images2);
+                if (images2.result) {
+                    allImages.push(...images2.result.slice(0, fetchLimit));
+                    fetchedImagesCount += images2.result.length;
+                }
+            }
+
+            // Break if no more images found
+            if (fetchedImagesCount >= imageCount) break;
         }
 
-        // Format the image URLs into a message
-        const imageUrls = images.map(img => `![Image](${img.url})`).join('\n'); // Use markdown syntax for images
+        // Limit the number of images sent to the user
+        const finalImages = allImages.slice(0, imageCount);
 
-        // Send the formatted message
-        await message.send(`Here are the images I found:\n${imageUrls}`);
+        if (finalImages.length > 0) {
+            const filePaths = [];
+
+            // Download all images
+            for (let i = 0; i < finalImages.length; i++) {
+                const url = finalImages[i];
+                const filePath = path.join(cachePath, `image${i}.jpg`);
+                const writer = fs.createWriteStream(filePath);
+
+                const response = await axios({
+                    url,
+                    method: 'GET',
+                    responseType: 'stream',
+                });
+
+                response.data.pipe(writer);
+
+                await new Promise((resolve, reject) => {
+                    writer.on('finish', resolve);
+                    writer.on('error', reject);
+                });
+
+                filePaths.push(filePath);
+            }
+
+            // Send all images in one message as a direct reply
+            await message.reply({
+                body: `Here are the top ${finalImages.length} images for "${query}".`,
+                attachment: filePaths.map(filePath => fs.createReadStream(filePath))
+            });
+
+            // Cleanup: Remove downloaded files
+            filePaths.forEach(filePath => fs.unlinkSync(filePath));
+
+        } else {
+            await message.reply(`I couldn't find any images for "${query}".`);
+        }
+
     } catch (error) {
-        console.error("Error during Google Image Search:", error);
-        message.send(getLang("searchError")); // Send a friendly error message to the user
+        console.error(error);
+        await message.reply("There was an error accessing the image service or downloading the images. Please try again later.");
     }
 }
 
-// Exporting the config and command handler as specified
 export default {
     config,
-    onCall,
+    onCall
 };
