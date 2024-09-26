@@ -17,15 +17,11 @@ async function loadCommand(filePath) {
     }
 }
 
-function replaceUndefinedPrefix(commandName, prefix) {
-    return commandName.replace(/^undefined/, prefix);
-}
-
 async function onCall({ message }) {
     const input = message.body.trim().toLowerCase();
     const commandEntry = commandFiles.find(({ name }) => input.startsWith(name));
 
-    // Get the actual prefix (replace this with your actual prefix retrieval logic)
+    // Get the actual prefix dynamically
     const actualPrefix = message.thread?.data?.prefix || global.config.PREFIX;
 
     if (commandEntry) {
@@ -34,12 +30,15 @@ async function onCall({ message }) {
 
         if (command && command.config) {
             const args = input.slice(name.length).trim().split(" ");
+
+            // Pass the actual prefix in the data object
             await command.onCall({
                 message,
                 args,
                 getLang: (key) => key, // Placeholder for getLang function, modify as needed
-                data: { thread: { data: { prefix: actualPrefix } } }, // Pass the actual prefix to commands
+                data: { thread: { data: { prefix: actualPrefix } } }, // Pass the prefix correctly
                 userPermissions: message.senderID, // Assuming senderID is used for permissions
+                prefix: actualPrefix // Pass the prefix directly to commands
             });
             return;
         }
