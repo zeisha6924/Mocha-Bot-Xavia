@@ -26,7 +26,9 @@ async function onCall({ message, args, getLang }) {
     const videoUrl = args[0];
     
     try {
-        const msgData = await message.send(getLang("message"));
+        // Ensure the message being sent is valid
+        const sendingMessage = getLang("message") || "Processing your request...";
+        const msgData = await message.send(sendingMessage);
         const data = await samirapi.facebook(videoUrl);
 
         // Assuming 'data' contains the download URL
