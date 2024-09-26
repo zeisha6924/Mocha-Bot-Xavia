@@ -1,6 +1,6 @@
 const langData = {
     "en_US": {
-        "prefix.get": "🌐 | Bot's Current Prefix is [ {prefix} ]"
+        "prefix.get": "🌐 | Bot's Current Prefix is [ {prefix} ]\nChat -help to see all commands."
     }
 }
 
