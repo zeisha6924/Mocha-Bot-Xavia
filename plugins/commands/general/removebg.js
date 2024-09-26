@@ -1,61 +1,72 @@
 import samirapi from 'samirapi';
-import { writeFileSync, unlinkSync } from 'fs';
-import { join } from 'path';
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cachePath = './plugins/commands/cache';
 
 const config = {
     name: "removebg",
-    aliases: ["rbg"],
-    description: "Removes the background from an image.",
-    usage: "Reply to an image message to remove its background.",
-    cooldown: 5,
+    version: "1.0.0",
     permissions: [1, 2], // Updated permissions
-    isAbsolute: false,
-    isHidden: false,
     credits: "XaviaTeam",
-    extra: {
-        // additional properties if needed
-    },
+    description: "Removes the background from an image.",
+    commandCategory: "Images",
+    usages: "Reply to an image message to remove its background.",
+    cooldown: 5,
 };
 
-/** @type {TReplyCallback} */
-async function onReply({ message, balance, getLang, data, xDB, eventData }) {
-    // Check if the message is a reply
-    const repliedMessage = eventData.message;
-    if (!repliedMessage || !repliedMessage.isReply) {
-        return message.send("Please reply to an image message.");
+const langData = {
+    "en_US": {
+        "notAReply": "Please reply to an image message to remove its background.",
+        "notAPhoto": "This is not a photo.",
+        "processingError": "An error occurred while processing the image.",
+        "executionError": "An error occurred while executing the command.",
+        "successMessage": "Here is the image with the background removed ✅"
+    }
+};
+
+async function onCall({ message, getLang }) {
+    // Check if the message is a reply and contains an image
+    if (!message.messageReply || !message.messageReply.attachments || message.messageReply.attachments.length === 0) {
+        return message.reply(getLang("notAReply"));
     }
 
-    // Check if the replied message has an image
-    const repliedAttachments = repliedMessage.attachments || [];
-    if (repliedAttachments.length === 0) {
-        return message.send("Please reply to an image message.");
+    // Check if the replied message contains a photo
+    if (message.messageReply.attachments[0].type !== "photo") {
+        return message.reply(getLang("notAPhoto"));
     }
-
-    const imageUrl = repliedAttachments[0].url; // Assuming the URL is stored in this format
 
     try {
+        const imageUrl = message.messageReply.attachments[0].url;
+
+        // Remove the background from the image
         const imageBuffer = await samirapi.remBackground(imageUrl);
-        const outputPath = join(cachePath, 'no_background.png'); // Use the specified cache path
-        writeFileSync(outputPath, imageBuffer);
         
-        // Send the processed image back to the original message
-        await message.send("Here is the image with the background removed:", { 
-            files: [outputPath] 
+        // Ensure the cache directory exists
+        await fs.ensureDir(cachePath);
+
+        // Save the image to the cache directory
+        const filePath = path.join(cachePath, 'no_background.png');
+        await fs.outputFile(filePath, imageBuffer);
+
+        // Send the processed image as a reply
+        await message.reply({
+            body: getLang("successMessage"),
+            attachment: fs.createReadStream(filePath)
         });
 
-        // Clean up the saved image
-        unlinkSync(outputPath); // Delete the saved image after sending
+        // Optionally clean up the saved image after sending
+        await fs.unlink(filePath); // Delete the saved image after sending
     } catch (error) {
         console.error(error);
-        message.send("An error occurred while processing the image.");
+        return message.reply(getLang("executionError"));
     }
 }
 
-/** @type {TOnCallCommand} */
-async function onCall({ message }) {
-    message.send("Please reply to an image message to remove its background.");
-}
-
-export { config, onCall, onReply };
+export default {
+    config,
+    langData,
+    onCall
+};
