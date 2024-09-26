@@ -1,17 +1,11 @@
-import fs from 'fs';
-import path from 'path';
-
-const commandsDir = path.resolve(__dirname, '../commands/general');
-
-async function loadCommands() {
-    const commandFiles = fs.readdirSync(commandsDir)
-        .filter(file => file.endsWith('.js'))
-        .map(file => ({
-            path: path.join(commandsDir, file),
-            name: path.basename(file, '.js')
-        }));
-    return commandFiles;
-}
+const commandFiles = [
+    'ai', 'gemini', 'gpt', 'help', 'imagine', 'lyrics', 'pinterest', 
+    'remini', 'spotify', 'tid', 'translate', 'uid', 'unsend',
+    // Add future commands here
+].map(name => ({
+    path: `../commands/general/${name}.js`,
+    name
+}));
 
 async function loadCommand(filePath) {
     try {
@@ -24,7 +18,6 @@ async function loadCommand(filePath) {
 }
 
 async function onCall({ message }) {
-    const commandFiles = await loadCommands();
     const input = message.body.trim().toLowerCase();
     const commandEntry = commandFiles.find(({ name }) => input.startsWith(name));
 
