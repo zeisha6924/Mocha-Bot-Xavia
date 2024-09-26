@@ -8,7 +8,7 @@ const config = {
     description: "Search for images on Google based on a query.",
     usage: "[query] -[number of images]",
     cooldown: 5,
-    permissions: [1, 2], // Updated permissions
+    permissions: [1, 2],
     isAbsolute: false,
     isHidden: false,
     credits: "coffee",
@@ -36,24 +36,16 @@ async function onStart({ message, event, args }) {
         });
 
         const images = response.data.items.slice(0, 9); // Limit to the first 9 images
-
-        // Fill with nulls if fewer than 9 images
-        while (images.length < 9) {
-            images.push(null);
-        }
-
         const imgData = [];
         let imagesDownloaded = 0;
 
         for (const image of images) {
-            if (!image) {
-                continue; // Skip null values
-            }
+            if (!image) continue;
 
             const imageUrl = image.link;
 
             try {
-                const imageResponse = await axios.head(imageUrl); // Validate image URL
+                const imageResponse = await axios.head(imageUrl);
 
                 if (imageResponse.headers['content-type'].startsWith('image/')) {
                     const response = await axios({
@@ -72,38 +64,38 @@ async function onStart({ message, event, args }) {
                         writer.on('error', reject);
                     });
 
-                    imgData.push(fs.createReadStream(outputFileName));
+                    imgData.push({ path: outputFileName });
                     imagesDownloaded++;
                 } else {
                     console.error(`Invalid image (${imageUrl}): Content type is not recognized as an image.`);
                 }
             } catch (error) {
                 console.error(`Error downloading image (${imageUrl}):`, error);
-                continue; // Skip the current image if there's an error
+                continue;
             }
         }
 
         if (imagesDownloaded > 0) {
-            // Send only non-bad images as attachments
-            await message.send({ attachment: imgData }, event.threadID, event.messageID);
+            const attachments = imgData.map(img => fs.createReadStream(img.path));
+            await message.send({ attachment: attachments }, event.threadID, event.messageID);
 
             // Remove local copies after sending
-            imgData.forEach((img) => fs.removeSync(img.path));
+            for (const img of imgData) {
+                fs.removeSync(img.path);
+            }
         } else {
-            message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
+            message.send('📷 | Can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
         }
     } catch (error) {
         console.error(error);
-        return message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
+        return message.send('📷 | Can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)', event.threadID, event.messageID);
     }
 }
 
-// The onCall function to handle incoming command requests
 async function onCall({ message, event, args }) {
     await onStart({ message, event, args });
 }
 
-// Exporting the config and command handler as specified
 export default {
     config,
     onCall,
