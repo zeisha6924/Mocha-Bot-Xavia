@@ -22,6 +22,7 @@ const config = {
 
 /** @type {TOnCallCommand} */
 const onCall = async ({ message, args }) => {
+    const imgData = [];
     try {
         if (args.length === 0) {
             return message.send('📷 | Follow this format:\n-gmage naruto uzumaki');
@@ -47,7 +48,6 @@ const onCall = async ({ message, args }) => {
             images.push(null);
         }
 
-        const imgData = [];
         let imagesDownloaded = 0;
 
         for (const image of images) {
@@ -66,7 +66,7 @@ const onCall = async ({ message, args }) => {
                         responseType: 'stream',
                     });
 
-                    const outputFileName = path.join(__dirname, 'tmp', `downloaded_image_${imgData.length + 1}.png`);
+                    const outputFileName = path.join(__dirname, '../cache', `downloaded_image_${imgData.length + 1}.png`);
                     const writer = fs.createWriteStream(outputFileName);
 
                     response.data.pipe(writer);
@@ -76,7 +76,7 @@ const onCall = async ({ message, args }) => {
                         writer.on('error', reject);
                     });
 
-                    imgData.push(fs.createReadStream(outputFileName));
+                    imgData.push(outputFileName); // Store file paths instead of streams
                     imagesDownloaded++;
                 } else {
                     console.error(`Invalid image (${imageUrl}): Content type is not recognized as an image.`);
@@ -88,11 +88,11 @@ const onCall = async ({ message, args }) => {
         }
 
         if (imagesDownloaded > 0) {
-            // Send only non-bad images as attachments
+            // Send images as attachments
             await message.send({ attachment: imgData });
 
-            // Clean up local copies
-            imgData.forEach((img) => fs.remove(img.path));
+            // Clean up local copies after sending
+            await Promise.all(imgData.map(img => fs.remove(img)));
         } else {
             message.send('📷 | can\'t get your images atm, do try again later... (⁠｡⁠ŏ⁠﹏⁠ŏ⁠)');
         }
