@@ -18,40 +18,38 @@ const commandFiles = [
 async function loadCommand(filePath) {
     try {
         const commandModule = await import(filePath);
-        return commandModule.default;
+        return commandModule.default; // Return the default export of the command
     } catch (error) {
         console.error(`Failed to load command script from ${filePath}:`, error);
-        return null;
+        return null; // Return null if loading fails
     }
 }
 
-async function onCall({ message, prefix }) {
+async function onCall({ message }) {
     const input = message.body.trim();
 
     for (const { path, name } of commandFiles) {
-        if (input.toLowerCase().startsWith(`${prefix}${name}`)) {
+        // Check if the input starts with the command name
+        if (input.toLowerCase().startsWith(name)) {
             const command = await loadCommand(path);
 
-            if (command) {
-                const args = input.slice(`${prefix}${name}`.length).trim().split(" ");
+            if (command && command.config) {
+                const args = input.slice(name.length).trim().split(" "); // Get the arguments for the command
 
-                if (command.onCall) {
-                    await command.onCall({
-                        message,
-                        args,
-                        getLang: (key) => key,
-                        data: {},
-                        userPermissions: message.senderID,
-                        prefix
-                    });
-                    return;
-                } else {
-                    console.log(`Command ${name} does not have an onCall function.`);
-                }
+                // Call the command's onCall function
+                await command.onCall({
+                    message,
+                    args,
+                    getLang: (key) => key, // Placeholder for getLang function, modify as needed
+                    data: {}, // Add relevant data if required
+                    userPermissions: message.senderID, // Assuming senderID is used for permissions
+                });
+                return; // Exit after processing the command
             }
         }
     }
 
+    // If no command was found, you can send a default message or perform another action
     console.log("No valid command found for input:", input);
 }
 
