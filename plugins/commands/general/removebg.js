@@ -10,7 +10,7 @@ const config = {
     name: "removebg",
     version: "1.0.0",
     permissions: [0, 1, 2],
-    credits: "XaviaTeam",
+    credits: "coffee",
     description: "Removes the background from an image.",
     commandCategory: "Images",
     usages: "Reply to an image message to remove its background.",
@@ -23,7 +23,7 @@ const langData = {
         notAPhoto: "This is not a photo.",
         processingError: "An error occurred while processing the image.",
         executionError: "An error occurred while executing the command.",
-        successMessage: "Here is the image with the background removed"
+        successMessage: "Here is the image with the background removed ✅"
     }
 };
 
@@ -52,12 +52,11 @@ async function onCall({ message, getLang }) {
         await fs.unlink(filePath);
     } catch (error) {
         console.error(error);
-        message.reply(getLang("executionError"));
+        return message.reply(getLang("executionError"));
     }
 }
 
 export default {
     config,
-    langData,
     onCall
 };
