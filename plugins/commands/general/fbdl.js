@@ -1,99 +1,99 @@
-import samirapi from 'samirapi';
-import fs from 'fs-extra';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { statSync } from 'fs';
-
-const _48MB = 48 * 1024 * 1024;
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const cachePath = './plugins/commands/cache';
+import axios from 'axios';
 
 const config = {
-    name: "fbdl",
-    aliases: ["fbdownload", "fbvideo"],
-    description: "Download a Facebook video from the provided link.",
-    usage: "[video URL]",
+    name: "alldl",
+    aliases: ["alldownload", "linkdownload"],
+    description: "Download Video Links in many Platforms",
+    usage: "[link]",
     cooldown: 5,
-    permissions: [1, 2],
-    credits: "XaviaTeam",
+    permissions: [1, 2], // Updated permissions
+    isAbsolute: false,
+    isHidden: false,
+    credits: "coffee",
 };
 
-const langData = {
-    "en_US": {
-        "missingUrl": "Please provide a Facebook video URL.",
-        "fileTooLarge": "File is too large, max size is 48MB.",
-        "error": "An error occurred while downloading the video."
-    },
-    // Add more languages if needed
-};
+async function fetchContent(BASE_URL, selectedUrlIndex, link) {
+    const BASE_URLS = [
+        'https://samirxpikachuio.onrender.com',
+        'https://www.samirxpikachu.run.place',
+        'http://samirxzy.onrender.com'
+    ];
 
-/** @type {TOnCallCommand} */
-async function onCall({ message, args, getLang }) {
-    let filePath;
     try {
-        if (!args[0]) return message.send(getLang('missingUrl'));
-
-        const videoUrl = args[0];
-        message.react("⏳");
-        
-        // Attempt to fetch the video download data
-        const data = await samirapi.facebook(videoUrl);
-
-        // Validate the download URL
-        const downloadUrls = data?.downloadUrl;
-        if (Array.isArray(downloadUrls) && downloadUrls.length > 0) {
-            filePath = path.join(cachePath, 'facebook_video.mp4');
-
-            // Download the video using the first URL in the array
-            const videoBuffer = await samirapi.download(downloadUrls[0]);
-
-            // Save the video to the specified path
-            await fs.outputFile(filePath, videoBuffer);
-
-            // Check the file size before sending
-            const fileStat = statSync(filePath);
-            if (fileStat.size > _48MB) {
-                await fs.unlink(filePath); // Clean up if file is too large
-                return message.send(getLang('fileTooLarge'));
-            }
-
-            message.react("✅");
-            await message.send({
-                body: "Here is your video:",
-                attachment: fs.createReadStream(filePath)
-            });
-        } else {
-            return message.send(getLang('error'));
-        }
+        let response = await axios.get(`${BASE_URLS[selectedUrlIndex]}${BASE_URL}`);
+        return response;
     } catch (error) {
-        message.react("❌");
-        console.error("Error downloading video:", error);
-        await message.send(`${getLang('error')} Details: ${error.message || error}`);
-    } finally {
-        // Cleanup: Ensure the file is deleted after the process
-        try {
-            if (filePath && await fs.pathExists(filePath)) {
-                await fs.unlink(filePath);
-            }
-        } catch (cleanupError) {
-            console.error("Error during cleanup:", cleanupError);
+        if (selectedUrlIndex < BASE_URLS.length - 1) {
+            selectedUrlIndex++;
+            return await fetchContent(BASE_URL, selectedUrlIndex, link);
+        } else {
+            throw new Error("All fallback URLs failed.");
         }
     }
 }
 
-/** @type {TReplyCallback} */
-async function onReply({ message }) {
-    // Handle reply events if needed
+/** @type {TOnCallCommand} */
+async function onCall({ message, args }) {
+    const link = args.join(" ");
+    if (!link) {
+        return message.reply("Please provide the link.");
+    } else {
+        let BASE_URL;
+        let selectedUrlIndex = 0;
+
+        // Determine the base URL based on the input link
+        if (link.includes("facebook.com")) {
+            BASE_URL = `/fbdl?vid_url=${encodeURIComponent(link)}`;
+        } else if (link.includes("twitter.com")) {
+            BASE_URL = `/twitter?url=${encodeURIComponent(link)}`;
+        } else if (link.includes("tiktok.com")) {
+            BASE_URL = `/tiktok?url=${encodeURIComponent(link)}`;
+        } else if (link.includes("open.spotify.com")) {
+            BASE_URL = `/spotifydl?url=${encodeURIComponent(link)}`;
+        } else if (link.includes("youtu.be") || link.includes("youtube.com")) {
+            BASE_URL = `/ytdl?url=${encodeURIComponent(link)}`;
+        } else if (link.includes("instagram.com")) {
+            BASE_URL = `/igdl?url=${encodeURIComponent(link)}`;
+        } else {
+            return message.reply("Unsupported source.");
+        }
+
+        message.reply("Processing your request... Please wait.");
+
+        try {
+            const res = await fetchContent(BASE_URL, selectedUrlIndex, link);
+            let contentUrl;
+
+            // Extract the content URL based on the platform
+            if (link.includes("facebook.com")) {
+                contentUrl = res.data.links["Download High Quality"];
+            } else if (link.includes("twitter.com")) {
+                contentUrl = res.data.HD;
+            } else if (link.includes("tiktok.com")) {
+                contentUrl = res.data.hdplay;
+            } else if (link.includes("instagram.com")) {
+                const instagramResponse = res.data;
+                if (Array.isArray(instagramResponse.url) && instagramResponse.url.length > 0) {
+                    const mp4UrlObject = instagramResponse.url.find(obj => obj.type === 'mp4');
+                    if (mp4UrlObject) {
+                        contentUrl = mp4UrlObject.url;
+                    }
+                }
+            }
+
+            const response = {
+                attachment: await global.utils.getStreamFromURL(contentUrl),
+            };
+
+            await message.reply(response);
+        } catch (error) {
+            message.reply("Sorry, the content could not be downloaded.");
+        }
+    }
 }
 
-/** @type {TReactCallback} */
-async function onReaction({ message }) {
-    // Handle reaction events if needed
-}
-
+// Exporting the config and command handler as specified
 export default {
     config,
-    langData,
     onCall,
 };
