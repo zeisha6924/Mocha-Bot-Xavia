@@ -36,7 +36,7 @@ async function fetchContent(BASE_URL, selectedUrlIndex, link) {
 async function onCall({ message, args }) {
     const link = args.join(" ");
     if (!link) {
-        return message.reply("Please provide the link.");
+        return message.send("Please provide the link.");
     } else {
         let BASE_URL;
         let selectedUrlIndex = 0;
@@ -55,10 +55,10 @@ async function onCall({ message, args }) {
         } else if (link.includes("instagram.com")) {
             BASE_URL = `/igdl?url=${encodeURIComponent(link)}`;
         } else {
-            return message.reply("Unsupported source.");
+            return message.send("Unsupported source.");
         }
 
-        message.reply("Processing your request... Please wait.");
+        message.send("Processing your request... Please wait.");
 
         try {
             const res = await fetchContent(BASE_URL, selectedUrlIndex, link);
@@ -81,13 +81,20 @@ async function onCall({ message, args }) {
                 }
             }
 
-            const response = {
-                attachment: await global.utils.getStreamFromURL(contentUrl),
-            };
+            if (contentUrl) {
+                const response = await axios({
+                    url: contentUrl,
+                    method: 'GET',
+                    responseType: 'stream',
+                });
 
-            await message.reply(response);
+                await message.send({ attachment: response.data });
+            } else {
+                message.send("Sorry, the content could not be found.");
+            }
         } catch (error) {
-            message.reply("Sorry, the content could not be downloaded.");
+            console.error("Error occurred during content fetching:", error);
+            message.send("Sorry, the content could not be downloaded.");
         }
     }
 }
