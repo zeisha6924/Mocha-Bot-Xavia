@@ -1,15 +1,12 @@
-import axios from "axios";
-
-const EMAIL_API_URL = "https://www.samirxpikachu.run.place/tempmail/get";
-const INBOX_API_URL = "https://www.samirxpikachu.run.place/tempmail/inbox/";
+import samirapi from "samirapi";
 
 const config = {
     name: "tempmail",
     aliases: ["tmpmail", "mail"],
-    description: "Generate temporary emails or check the inbox of a temporary email.",
+    description: "Generate a temporary email address or check the inbox of a temporary email.",
     usage: "[create/inbox] [email]",
     cooldown: 5,
-    permissions: [0, 1, 2],
+    permissions: [1, 2],
     isAbsolute: false,
     isHidden: false,
     credits: "coffee",
@@ -28,7 +25,7 @@ const langData = {
     },
 };
 
-async function onCall({ message, args, getLang, extra, data, userPermissions, prefix }) {
+async function onCall({ message, args, getLang }) {
     try {
         if (args.length === 0) {
             return message.send(getLang("generateUsage"));
@@ -37,54 +34,42 @@ async function onCall({ message, args, getLang, extra, data, userPermissions, pr
         const command = args[0].toLowerCase();
 
         if (command === "create") {
-            let email;
             try {
-                // Generate a random temporary email
-                const response = await axios.get(EMAIL_API_URL);
-                email = response.data.email;
-
-                if (!email) {
-                    throw new Error("Failed to generate email");
-                }
+                // Generate a random temporary email using samirapi
+                const email = await samirapi.getTempMail();
+                return message.send(`${getLang("generatedEmail")}${email}`);
             } catch (error) {
                 console.error("❌ | Failed to generate email", error.message);
                 return message.send(`${getLang("generateFail")}${error.message}`);
             }
-            return message.send(`${getLang("generatedEmail")}${email}`);
         } else if (command === "inbox" && args.length === 2) {
             const email = args[1];
             if (!email) {
                 return message.send(getLang("invalidCommand"));
             }
 
-            let inboxMessages;
             try {
-                // Retrieve messages from the specified email
-                const inboxResponse = await axios.get(`${INBOX_API_URL}${email}`);
-                inboxMessages = inboxResponse.data;
+                // Retrieve messages from the specified email using samirapi
+                const inboxMessages = await samirapi.getInbox(email);
 
-                if (!Array.isArray(inboxMessages)) {
-                    throw new Error("Unexpected response format");
+                if (!Array.isArray(inboxMessages) || inboxMessages.length === 0) {
+                    return message.send(getLang("noMessages"));
                 }
+
+                // Get the most recent message
+                const latestMessage = inboxMessages[0];
+                const { date, from, subject } = latestMessage;
+
+                const formattedMessage = getLang("inboxDetails")
+                    .replace("{from}", from)
+                    .replace("{subject}", subject)
+                    .replace("{date}", date);
+
+                return message.send(`${getLang("inboxMessage")}${email}:\n${formattedMessage}`);
             } catch (error) {
                 console.error(`❌ | Failed to retrieve inbox messages`, error.message);
                 return message.send(`${getLang("inboxFail")}${error.message}`);
             }
-
-            if (inboxMessages.length === 0) {
-                return message.send(getLang("noMessages"));
-            }
-
-            // Get the most recent message
-            const latestMessage = inboxMessages[0];
-            const { date, from, subject } = latestMessage;
-
-            const formattedMessage = getLang("inboxDetails")
-                .replace("{from}", from)
-                .replace("{subject}", subject)
-                .replace("{date}", date);
-
-            return message.send(`${getLang("inboxMessage")}${email}:\n${formattedMessage}`);
         } else {
             return message.send(getLang("invalidCommand"));
         }
