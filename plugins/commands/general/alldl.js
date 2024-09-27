@@ -5,7 +5,7 @@ const config = {
     aliases: ["alldownload", "linkdownload"],
     description: "Download Video Links in many Platforms",
     usage: "[link]",
-    category: "Members",
+    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜",
     cooldown: 5,
     permissions: [0, 1, 2], // Updated permissions
     isAbsolute: false,
