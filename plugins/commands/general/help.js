@@ -14,7 +14,7 @@ const config = {
     version: "1.0.0",
     description: "Lists all available commands.",
     usage: "",
-    category: "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", // Main category for help command
+    category: "𝙴𝚞𝚍𝚊𝚌𝚒𝚘𝚗",
     credits: "Your Name"
 };
 
@@ -27,14 +27,22 @@ async function onCall({ message }) {
     // Load each command file
     for (const file of files) {
         if (file.endsWith('.js')) {
-            const { config } = await import(path.join(commandsDir, file));
-            commandsConfig.set(config.name, config);
+            try {
+                const commandModule = await import(path.join(commandsDir, file));
+                if (commandModule && commandModule.config) {
+                    commandsConfig.set(commandModule.config.name, commandModule.config);
+                } else {
+                    console.warn(`Warning: The command file ${file} does not export a valid config object.`);
+                }
+            } catch (error) {
+                console.error(`Error loading command file ${file}:`, error);
+            }
         }
     }
 
     // Categorize commands
     const categorizedCommands = {
-        "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗": [],
+        "𝙴𝚞𝚍𝚊𝚌𝚒𝚘𝚗": [],
         "𝙸𝚖𝚊𝚐𝚎": [],
         "𝙼𝚞𝚜𝚒𝚌": [],
         "𝙼𝚎𝚖𝚋𝚎𝚛𝚜": []
@@ -48,7 +56,7 @@ async function onCall({ message }) {
 
     // Prepare the response message
     let responseMessage = "━━━━━━━━━━━━━━━━\n";
-    responseMessage += "𝙰𝚟𝚊𝚒𝚋𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚝𝚜:\n";
+    responseMessage += "𝙰𝚟𝚊𝚒𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚝𝚜:\n";
 
     for (const [category, commands] of Object.entries(categorizedCommands)) {
         if (commands.length > 0) {
@@ -71,7 +79,7 @@ async function onCall({ message }) {
 // Helper function to get category emoji
 function getCategoryEmoji(category) {
     switch (category) {
-        case "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗":
+        case "𝙴𝚞𝚍𝚊𝚌𝚒𝚘𝚗":
             return "📖";
         case "𝙸𝚖𝚊𝚐𝚎":
             return "🖼";
