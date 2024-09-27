@@ -13,27 +13,26 @@ const config = {
 };
 
 const previousResponses = new Map(); // Map to store previous responses for each user
+const header = "🗨️✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝"; // Updated header to "Copilot"
 
 async function onCall({ message, args }) {
-    const id = message.senderID; // User ID
     if (!args.length) {
-        await message.reply("🗨️✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝\n━━━━━━━━━━━━━━━━\nHello! How can I assist you today?\n━━━━━━━━━━━━━━━━");
+        await message.reply(`${header}\n━━━━━━━━━━━━━━━━\nHello! How can I assist you today?\n━━━━━━━━━━━━━━━━`);
         return;
     }
 
     let query = args.join(" ");
-    const previousResponse = previousResponses.get(id); // Get the previous response for the user
 
-    // If there's a previous response, handle it as a follow-up
-    if (previousResponse) {
-        query = `Follow-up on: "${previousResponse}"\nUser reply: "${query}"`;
+    // If the query is a follow-up to a previous message
+    if (previousResponses.has(message.threadID)) {
+        query = `Follow-up: "${previousResponses.get(message.threadID)}"\nUser reply: "${query}"`;
     }
 
     try {
         const typ = global.api.sendTypingIndicator(message.threadID);
 
         // Send request to the API with the query
-        const response = await axios.get(`https://samirxpikachuio.onrender.com/bing?message=${encodeURIComponent(query)}&mode=1&uid=${id}`);
+        const response = await axios.get(`https://samirxpikachuio.onrender.com/bing?message=${encodeURIComponent(query)}&mode=1`);
 
         typ();
 
@@ -46,11 +45,11 @@ async function onCall({ message, args }) {
         // Additional logging for debugging purposes
         console.log(`Sending message: ${copilotResponse}`);
 
-        // Send the extracted message to the user
-        await message.send(`🗨️✨ | 𝙲𝚘𝚙𝚒𝚝𝚘𝚝\n━━━━━━━━━━━━━━━━\n${copilotResponse}\n━━━━━━━━━━━━━━━━`);
+        // Send the extracted message to the user with the specific header
+        const msgData = await message.send(`${header}\n━━━━━━━━━━━━━━━━\n${copilotResponse}\n━━━━━━━━━━━━━━━━`);
 
         // Store the response for follow-up
-        previousResponses.set(id, copilotResponse);
+        previousResponses.set(message.threadID, copilotResponse); // Store the last response per thread
     } catch (error) {
         // Log the error for debugging
         console.error("API call failed: ", error);
@@ -58,7 +57,21 @@ async function onCall({ message, args }) {
     }
 }
 
+/** @type {TReplyCallback} */
+async function onReply({ message }) {
+    // Check if the reply is to a previous message from the bot with the specific header
+    const originalMessage = await message.getOriginal(); // Fetch the original message being replied to
+    if (originalMessage && originalMessage.body.startsWith(header)) {
+        const query = message.body; // Get the reply content
+
+        // Trigger the follow-up functionality with the new message as a query
+        await onCall({ message, args: query.split(" ") }); // Call onCall with the reply
+    }
+}
+
+// Exporting the config and command handler as specified
 export default {
     config,
-    onCall
-}
+    onCall,
+    onReply, // Ensure to export the onReply function
+};
