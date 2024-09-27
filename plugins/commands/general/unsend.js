@@ -3,7 +3,7 @@ const config = {
     aliases: ["unsend"],
     description: "Unsend bot's message",
     usage: "[reply]",
-    category: "Members",
+    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜",
     cooldown: 3,
     permissions: [0, 1, 2],
     credits: "XaviaTeam"
