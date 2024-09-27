@@ -10,7 +10,7 @@ const config = {
     credits: "Vex_Kshitiz/coffee",
     description: "Play a song from Spotify",
     usages: "<song-name> [by <artist>]",
-    category: "Music",
+    category: "𝙼𝚞𝚜𝚒𝚌",
     cooldown: 10
 };
 
