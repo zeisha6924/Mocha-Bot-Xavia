@@ -29,7 +29,7 @@ async function onCall({ message, args }) {
                 if (!email) {
                     throw new Error("Email not generated.");
                 }
-                return message.send(`━━━━━━━━━━━━━━━━\n📩 Gen-mail:${email}\n━━━━━━━━━━━━━━━━`);
+                return message.send(`━━━━━━━━━━━━━━━━\n📩 Email:${email}\n━━━━━━━━━━━━━━━━`);
             } catch (error) {
                 console.error("❌ | Failed to generate email", error.message);
                 return message.send(`❌ | Failed to generate email. Error: ${error.message}`);
