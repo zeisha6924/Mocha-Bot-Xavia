@@ -1,7 +1,8 @@
 const commandFiles = [
-    'ai', 'gemini', 'gpt', 'help', 'imagine', 'lyrics', 'pinterest', 
-    'remini', 'spotify', 'tid', 'translate', 'uid', 'unsend',
-    'removebg', // Add more command names that import samirapi
+    'ai', 'alldl', 'gemini', 'gpt', 'help', 'imagine', 'lyrics', 
+    'pinterest', 'remini', 'removebg', 'spotify', 
+    'tempmail', 'tid', 'translate', 'uid', 'unsend', // Add more command names here
+
 ].map(name => ({
     path: `../commands/general/${name}.js`,
     name
