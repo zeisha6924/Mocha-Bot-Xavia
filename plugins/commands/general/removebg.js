@@ -12,7 +12,7 @@ const config = {
     permissions: [0, 1, 2],
     credits: "coffee",
     description: "Removes the background from an image.",
-    commandCategory: "Images",
+    commandCategory: "𝙸𝚖𝚊𝚐𝚎",
     usages: "Reply to an image message to remove its background.",
     cooldown: 5,
 };
