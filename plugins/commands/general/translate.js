@@ -3,7 +3,7 @@ const config = {
     aliases: ['trans', 'dich'],
     description: "Translate text to the target language.",
     usage: '[lang] [text]',
-    category: "Education",
+    category: "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗",
     credits: 'XaviaTeam'
 };
 
