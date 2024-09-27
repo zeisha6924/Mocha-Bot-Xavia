@@ -17,25 +17,15 @@ const config = {
     cooldown: 5,
 };
 
-const langData = {
-    en_US: {
-        notAReply: "Please reply to an image message to remove its background.",
-        notAPhoto: "This is not a photo.",
-        processingError: "An error occurred while processing the image.",
-        executionError: "An error occurred while executing the command.",
-        successMessage: "Here is the image with the background removed"
-    }
-};
-
-async function onCall({ message, getLang }) {
+async function onCall({ message }) {
     const reply = message.messageReply;
 
     if (!reply?.attachments?.length) {
-        return message.reply(getLang("notAReply"));
+        return message.reply("Please reply to an image message to remove its background.");
     }
 
     if (reply.attachments[0].type !== "photo") {
-        return message.reply(getLang("notAPhoto"));
+        return message.reply("This is not a photo.");
     }
 
     try {
@@ -45,14 +35,14 @@ async function onCall({ message, getLang }) {
 
         await fs.outputFile(filePath, imageBuffer);
         await message.reply({
-            body: getLang("successMessage"),
+            body: "Here is the image with the background removed",
             attachment: fs.createReadStream(filePath)
         });
 
         await fs.unlink(filePath);
     } catch (error) {
         console.error(error);
-        return message.reply(getLang("executionError"));
+        return message.reply("An error occurred while executing the command.");
     }
 }
 
