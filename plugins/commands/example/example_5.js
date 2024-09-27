@@ -9,9 +9,6 @@ const config = {
 };
 
 async function onCall({ message, args }) {
-    const balance = message.balance; // Assuming balance is part of message context
-    balance.add(2000); // Example balance operation
-
     const msgData = await message.send("This is an example message");
     msgData.addReactEvent({ callback: onReaction });
     msgData.addReplyEvent({ callback: onReply });
