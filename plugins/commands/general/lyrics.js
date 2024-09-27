@@ -5,6 +5,7 @@ const config = {
     aliases: ["lyric"],
     description: "Fetch lyrics for a song",
     usage: "[song-name]",
+    category: "Music",
     cooldown: 5,
     permissions: [0, 1],
     isAbsolute: false,
