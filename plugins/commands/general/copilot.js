@@ -17,7 +17,7 @@ const previousResponses = new Map(); // Map to store previous responses for each
 async function onCall({ message, args }) {
     const id = message.senderID; // User ID
     if (!args.length) {
-        await message.reply("🗨️✨ | 𝙲𝚘𝚙𝚒𝚕𝑜𝚝\n━━━━━━━━━━━━━━━━\nHello! How can I assist you today?\n━━━━━━━━━━━━━━━━");
+        await message.reply("🗨️✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝\n━━━━━━━━━━━━━━━━\nHello! How can I assist you today?\n━━━━━━━━━━━━━━━━");
         return;
     }
 
@@ -40,22 +40,17 @@ async function onCall({ message, args }) {
         // Log the response to check its structure
         console.log("API response: ", response.data);
 
-        // Extract the reply from the correct path (assuming it's in response.data)
-        if (response.data && response.data.message) {
-            const copilotResponse = response.data.message;
+        // Directly use the response data assuming it's at the top level
+        const copilotResponse = response.data; // Update this line
 
-            // Additional logging for debugging purposes
-            console.log(`Sending message: ${copilotResponse}`);
+        // Additional logging for debugging purposes
+        console.log(`Sending message: ${copilotResponse}`);
 
-            // Send the extracted message to the user
-            await message.send(`🗨️✨ | 𝙲𝚘𝚙𝚒𝚝𝚘𝚝\n━━━━━━━━━━━━━━━━\n${copilotResponse}\n━━━━━━━━━━━━━━━━`);
+        // Send the extracted message to the user
+        await message.send(`🗨️✨ | 𝙲𝚘𝚙𝚒𝚝𝚘𝚝\n━━━━━━━━━━━━━━━━\n${copilotResponse}\n━━━━━━━━━━━━━━━━`);
 
-            // Store the response for follow-up
-            previousResponses.set(id, copilotResponse);
-        } else {
-            console.log("Unexpected response format: ", response.data);
-            await message.send("🗨️✨ | 𝙲𝚘𝚙𝚒𝚝𝚘𝚝\n━━━━━━━━━━━━━━━━\nError: Unexpected response format from API.\n━━━━━━━━━━━━━━━━");
-        }
+        // Store the response for follow-up
+        previousResponses.set(id, copilotResponse);
     } catch (error) {
         // Log the error for debugging
         console.error("API call failed: ", error);
