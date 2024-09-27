@@ -3,7 +3,7 @@ import axios from 'axios';
 const config = {
     name: "alldl",
     aliases: ["alldownload", "linkdownload"],
-    description: "Download Video Links in many Platforms",
+    description: "Download videos from various platforms including Facebook, Twitter, TikTok, Instagram, and Spotify.",
     usage: "[link]",
     category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜",
     cooldown: 5,
@@ -51,8 +51,6 @@ async function onCall({ message, args }) {
             BASE_URL = `/tiktok?url=${encodeURIComponent(link)}`;
         } else if (link.includes("open.spotify.com")) {
             BASE_URL = `/spotifydl?url=${encodeURIComponent(link)}`;
-        } else if (link.includes("youtu.be") || link.includes("youtube.com")) {
-            BASE_URL = `/ytdl?url=${encodeURIComponent(link)}`;
         } else if (link.includes("instagram.com")) {
             BASE_URL = `/igdl?url=${encodeURIComponent(link)}`;
         } else {
