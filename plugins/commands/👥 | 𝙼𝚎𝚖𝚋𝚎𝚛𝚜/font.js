@@ -1,6 +1,3 @@
-import axios from 'axios';
-import fs from 'fs';
-
 const fontMaps = [
   {
     name: 'cursive',
@@ -21,14 +18,11 @@ const config = {
   aliases: ["font"],
   description: "Convert text to different fonts",
   usage: "-font <font type> <text>",
-  cooldown: 0,
   permissions: [0], // Public access
   credits: "Coffee",
 };
 
 async function onCall({ message, args }) {
-  const event = message.event; // Assuming the event data is part of the message object
-
   if (args.length === 1 && args[0].toLowerCase() === 'list') {
     const exampleText = 'Hello';
     const header = '════════════════   𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙵𝚘𝚗𝚝𝚜 ƪ⁠(⁠‾⁠.⁠‾⁠“⁠)⁠┐\n════════════════\n𝙵𝚘𝚗𝚝 𝙽𝚊𝚖𝚎       𝚂𝚊𝚖𝚙𝚕𝚎';
@@ -46,18 +40,12 @@ async function onCall({ message, args }) {
       return `${formattedFontName}${padding}  ${exampleChar}`;
     }).join('\n');
 
-    return message.send(
-      `${header}\n${availableFontsList}`,
-      event.threadID,
-      event.messageID
-    );
+    return message.send(`${header}\n${availableFontsList}`);
   }
 
   if (args.length < 2) {
     return message.send(
-      "|｡_｡| Invalid Usage: Please use the command with a font type and text.\n\nExample: -font cursive I love you \n\nChat -font list to see more! •ᴗ•",
-      event.threadID,
-      event.messageID
+      "|｡_｡| Invalid Usage: Please use the command with a font type and text.\n\nExample: -font cursive I love you \n\nChat -font list to see more! •ᴗ•"
     );
   }
 
@@ -71,9 +59,7 @@ async function onCall({ message, args }) {
   if (!chosenFontMap) {
     const availableFonts = fontMaps.map((fontMap) => `★ ${fontMap.name}`).join('\n');
     return message.send(
-      `|｡_｡| Invalid Font Type: Available fonts:\n${availableFonts}\n\nExample: -font cursive Hello! •ᴗ•`,
-      event.threadID,
-      event.messageID
+      `|｡_｡| Invalid Font Type: Available fonts:\n${availableFonts}\n\nExample: -font cursive Hello! •ᴗ•`
     );
   }
 
@@ -82,15 +68,7 @@ async function onCall({ message, args }) {
     .map((char) => chosenFontMap.map[char] || char)
     .join('');
 
-  return message.send(outputText, event.threadID, event.messageID);
-}
-
-async function onReply({ message }) {
-  // Handle reply events if needed
-}
-
-async function onReaction({ message }) {
-  // Handle reaction events if needed
+  return message.send(outputText);
 }
 
 export default {
