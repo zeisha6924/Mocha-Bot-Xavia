@@ -3,6 +3,7 @@ const config = {
     permissions: [1, 2],
     description: "Set prefix for group",
     usage: "<prefix>",
+    category: "Members",
     cooldown: 5,
     credits: "XaviaTeam"
 }
