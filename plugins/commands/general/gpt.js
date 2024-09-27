@@ -5,7 +5,7 @@ const config = {
     aliases: ["chatgpt"],
     description: "Ask a question to the GPT.",
     usage: "[query]",
-    category: "Education",
+    category: "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗",
     cooldown: 3,
     permissions: [0, 1, 2],
     isAbsolute: false,
