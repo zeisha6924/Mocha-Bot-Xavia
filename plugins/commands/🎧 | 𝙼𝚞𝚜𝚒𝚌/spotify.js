@@ -1,7 +1,7 @@
+import axios from 'axios';
 import fs from 'fs-extra';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import samirapi from 'samirapi'; // Import samirapi
 
 const config = {
     name: "spotify",
@@ -10,13 +10,13 @@ const config = {
     credits: "Vex_Kshitiz/coffee",
     description: "Play a song from Spotify",
     usages: "<song-name> [by <artist>]",
-    category: "𝙼𝚞𝚜𝚒𝚌",
+    category: "Music",
     cooldown: 10
 };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const cacheFolder = `${__dirname}/cache`;
+const cacheFolder = __dirname + '/cache';
 
 // Function to create the cache folder if it doesn't exist
 async function ensureCacheFolderExists() {
@@ -38,19 +38,25 @@ async function onCall({ message, args, getLang }) {
     try {
         // Ensure that the cache folder exists
         await ensureCacheFolderExists();
+
         await message.react("⌛");
 
-        // Search for the song using samirapi
-        const results = await samirapi.spotifySearch(songTitle);
-        if (!results || results.length === 0) {
-            return await message.send(header + "No results found." + footer);
-        }
+        // Array of services to fetch track URLs
+        const services = [
+            { url: 'https://spotify-play-iota.vercel.app/spotify', params: { query: songTitle } },
+            { url: 'http://zcdsphapilist.replit.app/spotify', params: { q: songTitle } },
+            { url: 'https://samirxpikachuio.onrender.com/spotifysearch', params: { q: songTitle } },
+            { url: 'https://openapi-idk8.onrender.com/search-song', params: { song: songTitle } },
+            { url: 'https://markdevs-last-api.onrender.com/search/spotify', params: { q: songTitle } }
+        ];
 
-        const trackID = results[0].id; // Assuming results have an 'id' property
+        // Fetch track URLs from multiple services
+        const trackURLs = await fetchTrackURLs(services);
+        const trackID = trackURLs[0];
 
         // Fetch download link for the selected track ID
-        const downloadLinkResponse = await samirapi.spotifyDownload(trackID);
-        const downloadLink = downloadLinkResponse.download_link; // Assuming the response has this field
+        const downloadResponse = await axios.get(`https://sp-dl-bice.vercel.app/spotify?id=${encodeURIComponent(trackID)}`);
+        const downloadLink = downloadResponse.data.download_link;
 
         // Download the track and send as a reply
         const filePath = await downloadTrack(downloadLink);
@@ -84,6 +90,25 @@ function getSongTitleAndArtist(args) {
     }
 
     return { songTitle, artist };
+}
+
+async function fetchTrackURLs(services) {
+    for (const service of services) {
+        try {
+            const response = await axios.get(service.url, { params: service.params });
+
+            if (response.data.trackURLs && response.data.trackURLs.length > 0) {
+                console.log(`Track URLs fetched from ${service.url}`);
+                return response.data.trackURLs;
+            } else {
+                console.log(`No track URLs found at ${service.url}`);
+            }
+        } catch (error) {
+            console.error(`Error with ${service.url} API:`, error.message);
+        }
+    }
+
+    throw new Error("No track URLs found from any API.");
 }
 
 async function downloadTrack(url) {
