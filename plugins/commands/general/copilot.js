@@ -13,7 +13,7 @@ const config = {
 };
 
 const previousResponses = new Map(); // Map to store previous responses for each user
-const header = "🗨️✨ | 𝙲𝚘𝚙𝚒𝚝𝚘𝚝"; // Header for bot messages
+const header = "🌊✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝"; // Header for bot messages
 const uid = 100; // Set UID as required
 
 async function onCall({ message, args }) {
