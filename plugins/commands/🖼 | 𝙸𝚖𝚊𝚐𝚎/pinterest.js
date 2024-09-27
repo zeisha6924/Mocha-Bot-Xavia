@@ -11,8 +11,6 @@ const config = {
     category: "𝙸𝚖𝚊𝚐𝚎",
     cooldown: 5,
     permissions: [0, 1, 2],
-    isAbsolute: false,
-    isHidden: false,
     credits: "coffee",
     extra: {
         searchType: "images",
@@ -21,91 +19,60 @@ const config = {
 
 const cachePath = './plugins/commands/cache';
 
-/** @type {TOnCallCommand} */
 async function onCall({ message, args }) {
-    let imageCount = 1; // Default to 1 image
-    const query = args.slice(0, -1).join(" ") || "beautiful landscapes";
+    if (args.length === 0) {
+        await message.reply("📷 | Please follow this format:\n-pinterest cat -5");
+        return;
+    }
 
-    // Extract the number of images if provided
+    let imageCount = 1;
+    const query = args.slice(0, -1).join(" ");
+
     const countArg = args[args.length - 1];
     if (countArg.startsWith('-')) {
         imageCount = parseInt(countArg.slice(1), 10);
         if (isNaN(imageCount) || imageCount < 1) {
-            imageCount = 1;  // Default to 1 if invalid
+            imageCount = 1;
         } else if (imageCount > 12) {
-            imageCount = 12; // Cap at 12
+            imageCount = 12;
         }
     }
 
-    // Prepare to fetch images
     const allImages = [];
     let fetchedImagesCount = 0;
 
     try {
-        // Fetch images in increments of 6 (two requests max)
         while (fetchedImagesCount < imageCount) {
             const remaining = imageCount - fetchedImagesCount;
-            const fetchLimit = Math.min(6, remaining); // Only fetch up to 6 at a time
+            const fetchLimit = Math.min(6, remaining);
 
-            // First request
             const images1 = await samirapi.searchPinterest(query);
-            console.log(`Pinterest Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images1.result.length}):`, images1);
             if (images1.result) {
                 allImages.push(...images1.result.slice(0, fetchLimit));
                 fetchedImagesCount += images1.result.length;
             }
 
             if (fetchedImagesCount < imageCount) {
-                // Second request with query + 1
                 const images2 = await samirapi.searchPinterest(`${query} 1`);
-                console.log(`Pinterest Images (${fetchedImagesCount + 1}-${fetchedImagesCount + images2.result.length}):`, images2);
                 if (images2.result) {
                     allImages.push(...images2.result.slice(0, fetchLimit));
                     fetchedImagesCount += images2.result.length;
                 }
             }
 
-            // Break if no more images found
             if (fetchedImagesCount >= imageCount) break;
         }
 
-        // Limit the number of images sent to the user
         const finalImages = allImages.slice(0, imageCount);
 
         if (finalImages.length > 0) {
-            const filePaths = [];
-
-            // Download all images
-            for (let i = 0; i < finalImages.length; i++) {
-                const url = finalImages[i];
-                const filePath = path.join(cachePath, `image${i}.jpg`);
-                const writer = fs.createWriteStream(filePath);
-
-                const response = await axios({
-                    url,
-                    method: 'GET',
-                    responseType: 'stream',
-                });
-
-                response.data.pipe(writer);
-
-                await new Promise((resolve, reject) => {
-                    writer.on('finish', resolve);
-                    writer.on('error', reject);
-                });
-
-                filePaths.push(filePath);
-            }
-
-            // Send all images in one message as a direct reply
+            const filePaths = await downloadImages(finalImages);
             await message.reply({
                 body: `Here are the top ${finalImages.length} images for "${query}".`,
                 attachment: filePaths.map(filePath => fs.createReadStream(filePath))
             });
 
-            // Cleanup: Remove downloaded files
-            filePaths.forEach(filePath => fs.unlinkSync(filePath));
-
+            cleanupFiles(filePaths);
         } else {
             await message.reply(`I couldn't find any images for "${query}".`);
         }
@@ -116,7 +83,38 @@ async function onCall({ message, args }) {
     }
 }
 
+async function downloadImages(imageUrls) {
+    const filePaths = [];
+
+    for (let i = 0; i < imageUrls.length; i++) {
+        const url = imageUrls[i];
+        const filePath = path.join(cachePath, `image${i}.jpg`);
+        const writer = fs.createWriteStream(filePath);
+
+        const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream',
+        });
+
+        response.data.pipe(writer);
+
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+        });
+
+        filePaths.push(filePath);
+    }
+
+    return filePaths;
+}
+
+function cleanupFiles(filePaths) {
+    filePaths.forEach(filePath => fs.unlinkSync(filePath));
+}
+
 export default {
     config,
-    onCall
+    onCall,
 };
