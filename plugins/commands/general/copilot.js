@@ -13,7 +13,8 @@ const config = {
 };
 
 const previousResponses = new Map(); // Map to store previous responses for each user
-const header = "🗨️✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝"; // Updated header to "Copilot"
+const header = "🗨️✨ | 𝙲𝚘𝚙𝚒𝚝𝚘𝚝"; // Header for bot messages
+const uid = 100; // Set UID as required
 
 async function onCall({ message, args }) {
     if (!args.length) {
@@ -31,8 +32,8 @@ async function onCall({ message, args }) {
     try {
         const typ = global.api.sendTypingIndicator(message.threadID);
 
-        // Send request to the API with the query
-        const response = await axios.get(`https://samirxpikachuio.onrender.com/bing?message=${encodeURIComponent(query)}&mode=1`);
+        // Send request to the API with the query using the specified URL format
+        const response = await axios.get(`https://samirxpikachuio.onrender.com/bing?message=${encodeURIComponent(query)}&mode=1&uid=${uid}`);
 
         typ();
 
