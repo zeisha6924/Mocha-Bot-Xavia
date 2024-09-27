@@ -16,9 +16,10 @@ async function onCall({ message, args }) {
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        // Only send the response field from the API
+        // Format the response using the specified header and footer
         if (data && data.response) {
-            await message.send(data.response);
+            const formattedResponse = `🗃 | 𝙱𝚕𝚊𝚌𝚔 𝙱𝚘𝚡 |\n━━━━━━━━━━━━━━━━\n${data.response}\n━━━━━━━━━━━━━━━━`;
+            await message.send(formattedResponse);
         } else {
             await message.send("No response from the API.");
         }
