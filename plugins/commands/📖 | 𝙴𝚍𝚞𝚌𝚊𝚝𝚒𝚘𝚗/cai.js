@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const config = {
-    name: "ai2",
-    aliases: ["chat2", "mocha2"],
+    name: "cai",
+    aliases: ["1cai", "2cai"],
     description: "Interact with GPT-4 via API",
     usage: "[query]",
     category: "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗",
