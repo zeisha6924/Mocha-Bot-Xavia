@@ -58,13 +58,16 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
             category.push(`- ${value._name?.[language] || key}`);
         }
 
-        const commandList = Object.entries(commands)
-            .map(([category, cmds]) => `
+        // Arrange categories in the specified order
+        const orderedCategories = ["📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", "🖼 | 𝙸𝚖𝚊𝚐𝚎", "🎧 | 𝙼𝚞𝚜𝚒𝚌", "👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜"];
+        const commandList = orderedCategories
+            .filter(category => commands[category])
+            .map(category => `
 ╭─╼━━━━━━━━╾─╮
 │  ${category}
-│ ${cmds.join("\n│ ")}
+│ ${commands[category].join("\n│ ")}
 ╰─━━━━━━━━━╾─╯`)
-            .join("\n");
+            .join("");
 
         return message.reply(getLang("help.list", { commandList }));
     }
