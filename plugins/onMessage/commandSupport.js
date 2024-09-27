@@ -1,25 +1,25 @@
 const commandFiles = [
-    'ai', 'alldl', 'cai', 'copilot', 'gemini', 'gpt', 'help', 'imagine', 
-    'lyrics', 'pinterest', 'remini', 'removebg', 'spotify', 
-    'tempmail', 'tid', 'translate', 'uid', 'unsend', // Add more command names here
-].flatMap(name => [
-    {
-        path: `../commands/📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗/${name}.js`,
-        name
-    },
-    {
-        path: `../commands/🖼 | 𝙸𝚖𝚊𝚐𝚎/${name}.js`,
-        name
-    },
-    {
-        path: `../commands/🎧 | 𝙼𝚞𝚜𝚒𝚌/${name}.js`,
-        name
-    },
-    {
-        path: `../commands/👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜/${name}.js`,
-        name
-    },
-]);
+
+    { category: "📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", commands: 
+['ai', 'cai', 'copilot', 'gemini', 'gpt', 'translate'] },
+
+    { category: "🖼 | 𝙸𝚖𝚊𝚐𝚎", commands: 
+['imagine', 'pinterest', 'removebg', 'remini'] },
+
+    { category: "🎧 | 𝙼𝚞𝚜𝚒𝚌", commands: 
+['lyrics', 'spotify'] },
+
+    { category: "👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜", commands: 
+['tempmail', 'tid', 'uid', 'unsend', 'help', 'alldl'] }
+
+];
+
+const commandFilesWithPaths = commandFiles.flatMap(({ category, commands }) =>
+    commands.map(command => ({
+        path: `../commands/${category}/${command}.js`,
+        name: command
+    }))
+);
 
 async function loadCommand(filePath) {
     try {
@@ -33,7 +33,7 @@ async function loadCommand(filePath) {
 
 async function onCall({ message }) {
     const input = message.body.trim().toLowerCase();
-    const commandEntry = commandFiles.find(({ name }) => input.startsWith(name));
+    const commandEntry = commandFilesWithPaths.find(({ name }) => input.startsWith(name));
 
     const actualPrefix = message.thread?.data?.prefix || global.config.PREFIX;
 
