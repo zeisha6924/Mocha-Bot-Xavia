@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
+// Deriving the directory name in ES Module
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
+
 // Path to your command files
 const commandsDir = path.resolve(__dirname, '../commands/general');
 
@@ -10,7 +14,7 @@ const config = {
     version: "1.0.0",
     description: "Lists all available commands.",
     usage: "",
-    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜", // Main category for help command
+    category: "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", // Main category for help command
     credits: "Your Name"
 };
 
