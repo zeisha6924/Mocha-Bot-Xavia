@@ -7,9 +7,7 @@ const config = {
     credits: "XaviaTeam"
 };
 
-const langData = {
-    "en_US": {
-        "help2.list": `
+const help2List = `
 ━━━━━━━━━━━━━━━━
 𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
 {commandList}
@@ -18,7 +16,10 @@ Chat -𝚑𝚎𝚕𝚙 <command name>
 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
 
 𝙴𝚡𝚊𝚖𝚙𝚕𝚎: -help example
-━━━━━━━━━━━━━━━━`,
+━━━━━━━━━━━━━━━━`;
+
+const langData = {
+    "en_US": {
         "help2.commandNotExists": "Command {command} does not exist.",
         "help2.commandDetails": `
             ⇒ Name: {name}
@@ -66,7 +67,7 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
 ╰─━━━━━━━━━╾─╯`)
             .join("\n");
 
-        return message.reply(getLang("help2.list", { commandList }));
+        return message.reply(getLang(help2List, { commandList })); // Reference the moved help2.list
     }
 
     const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
