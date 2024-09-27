@@ -20,7 +20,7 @@ const langData = {
         `,
         "availableCommands": `
 ━━━━━━━━━━━━━━━━
-𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
+𝙰𝚟𝚊𝚒𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
 ╭─╼━━━━━━━━╾─╮
 │  📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗
 │ {educationCommands}
@@ -42,9 +42,6 @@ const langData = {
 𝙴𝚡𝚊𝚖𝚙𝚕𝚎: !help gemini
 ━━━━━━━━━━━━━━━━
         `,
-        "0": "Member",
-        "1": "Group Admin",
-        "2": "Bot Admin"
     }
 }
 
@@ -94,10 +91,10 @@ async function onCall({ message, args, userPermissions, prefix, data }) {
 
         // Format the command lists
         const formattedMessage = langData['en_US']["availableCommands"]
-            .replace("{educationCommands}", educationCommands.join("\n│ "))
-            .replace("{imageCommands}", imageCommands.join("\n│ "))
-            .replace("{musicCommands}", musicCommands.join("\n│ "))
-            .replace("{memberCommands}", memberCommands.join("\n│ "));
+            .replace("{educationCommands}", educationCommands.length > 0 ? educationCommands.join("\n│ ") : "No commands available.")
+            .replace("{imageCommands}", imageCommands.length > 0 ? imageCommands.join("\n│ ") : "No commands available.")
+            .replace("{musicCommands}", musicCommands.length > 0 ? musicCommands.join("\n│ ") : "No commands available.")
+            .replace("{memberCommands}", memberCommands.length > 0 ? memberCommands.join("\n│ ") : "No commands available.");
 
         message.reply(formattedMessage);
     } else {
