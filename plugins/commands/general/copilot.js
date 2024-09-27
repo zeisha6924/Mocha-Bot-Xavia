@@ -12,7 +12,7 @@ const config = {
     credits: "RN",
 };
 
-const previousResponses = new Map(); // Map to store previous responses for each user
+const previousResponses = new Map(); // Map to store previous responses for each thread
 const header = "🌊✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝"; // Header for bot messages
 const uid = 100; // Set UID as required
 
@@ -60,19 +60,33 @@ async function onCall({ message, args }) {
 
 /** @type {TReplyCallback} */
 async function onReply({ message }) {
-    // Check if the reply is to a previous message from the bot with the specific header
     const originalMessage = await message.getOriginal(); // Fetch the original message being replied to
     if (originalMessage && originalMessage.body.startsWith(header)) {
         const query = message.body; // Get the reply content
-
-        // Trigger the follow-up functionality with the new message as a query
         await onCall({ message, args: query.split(" ") }); // Call onCall with the reply
     }
 }
 
-// Exporting the config and command handler as specified
-export default {
-    config,
-    onCall,
-    onReply, // Ensure to export the onReply function
-};
+// Function to capture all messages and store them
+export default function ({ message }) {
+    const { body, messageID, senderID, attachments } = message;
+
+    // Log the message details if necessary
+    global.data.messages.push({
+        body,
+        messageID,
+        senderID,
+        attachments
+    });
+
+    // Process the reply if it's a reply to a bot message
+    if (message.isReply) {
+        onReply({ message });
+    } else {
+        // Process normal command
+        const args = body.split(" ").slice(1); // Assuming the command starts with the bot's name
+        if (body.startsWith(config.name)) {
+            onCall({ message, args });
+        }
+    }
+}
