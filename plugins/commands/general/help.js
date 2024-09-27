@@ -4,7 +4,7 @@ const config = {
     version: "1.0.3",
     description: "Show all commands or command details",
     usage: "[command] (optional)",
-    category: "Members",
+    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜",
     credits: "XaviaTeam"
 }
 
