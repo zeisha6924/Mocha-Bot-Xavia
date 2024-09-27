@@ -9,14 +9,15 @@ const config = {
 
 const langData = {
     "en_US": {
-        "help2.list": `━━━━━━━━━━━━━━━━
+        "help2.list": `
+━━━━━━━━━━━━━━━━
 𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
 {commandList}
-Chat -help2 <command name>
+Chat -help <command name>
 𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 
 available 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
 
-𝙴𝚡𝚊𝚖𝚙𝚕𝚎: -help2 example
+𝙴𝚡𝚊𝚖𝚙𝚕𝚎: -help example
 ━━━━━━━━━━━━━━━━`,
         "help2.commandNotExists": "Command {command} does not exist.",
         "help2.commandDetails": `
@@ -54,16 +55,18 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
         for (const [key, value] of commandsConfig.entries()) {
             if (value.isHidden || (value.isAbsolute && !global.config?.ABSOLUTES.includes(message.senderID)) || !value.permissions?.some(p => userPermissions.includes(p))) continue;
             const category = commands[value.category] || (commands[value.category] = []);
-            category.push(`│ -${value._name?.[language] || key}`);
+            category.push(`- ${value._name?.[language] || key}`);
         }
 
         const commandList = Object.entries(commands)
-            .map(([category, cmds]) => `╭─╼━━━━━━━━╾─╮\n│  ${getCategoryIcon(category)} | 𝙸𝚖𝚊𝚐𝚎\n${cmds.join("\n")}\n╰─━━━━━━━━━╾─╯`)
-            .join("\n\n");
+            .map(([category, cmds]) => `
+╭─╼━━━━━━━━╾─╮
+│  ${category}
+│ ${cmds.join("\n│ ")}
+╰─━━━━━━━━━╾─╯`)
+            .join("\n");
 
-        return message.reply(getLang("help2.list", {
-            commandList
-        }));
+        return message.reply(getLang("help2.list", { commandList }));
     }
 
     const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
@@ -82,17 +85,6 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
         cooldown: command.cooldown || 3,
         credits: command.credits || ""
     }).replace(/^ +/gm, ''));
-}
-
-function getCategoryIcon(category) {
-    const icons = {
-        "Education": "📖",
-        "Image": "🖼",
-        "Music": "🎧",
-        "Members": "👥"
-        // Add more categories and icons here as needed
-    };
-    return icons[category] || "ℹ️";
 }
 
 export default {
