@@ -2,7 +2,7 @@ import samirapi from 'samirapi';
 
 const config = {
     name: "mixtral",
-    aliases: ["mix", "assistant"],
+    aliases: ["mistral"],
     description: "AI Assistant that answers any questions",
     usage: "[question]",
     cooldown: 3,
