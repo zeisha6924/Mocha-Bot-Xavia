@@ -13,21 +13,12 @@ const config = {
     credits: "XaviaTeam",
 };
 
-const langData = {
-    "lang_1": {
-        "message": "Please provide a prompt to interact with the AI.",
-    },
-    "lang_2": {
-        "message": "Kailangan mo magbigay ng prompt para makipag-ugnayan sa AI.",
-    }
-};
-
 const header = "🧋✨ | 𝙼𝚘𝚌𝚑𝚊 𝙰𝚒\n━━━━━━━━━━━━━━━━\n";
 const footer = "\n━━━━━━━━━━━━━━━━";
 
 const previousResponses = new Map(); // Map to store previous responses for each user
 
-async function onCall({ message, args, getLang, data, userPermissions, prefix }) {
+async function onCall({ message, args, data, userPermissions, prefix }) {
     const userId = data.user?.id || 100; // User ID from data or default to 100
     let input = args.join(" "); // Combine arguments into a single prompt
 
@@ -104,6 +95,5 @@ async function onCall({ message, args, getLang, data, userPermissions, prefix })
 
 export default {
     config,
-    langData,
     onCall
 };
