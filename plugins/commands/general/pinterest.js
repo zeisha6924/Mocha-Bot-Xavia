@@ -8,6 +8,7 @@ const config = {
     aliases: ["pin"],
     description: "Search for images on Pinterest based on a query.",
     usage: "[query] -[number of images]",
+    category: "Image",
     cooldown: 5,
     permissions: [0, 1, 2],
     isAbsolute: false,
