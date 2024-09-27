@@ -4,7 +4,7 @@ const config = {
     version: "1.0.0",
     description: "Provides the thread ID",
     usage: "",
-    category: "Members",
+    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜",
     credits: "Your Name"
 };
 
