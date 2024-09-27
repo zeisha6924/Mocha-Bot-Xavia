@@ -15,14 +15,6 @@ const config = {
     extra: {}
 };
 
-const langData = {
-    "en_US": {
-        "message": "Images generated successfully ✅",
-        "error": "An error occurred while processing the request",
-        "missingPrompt": "Please provide something to imagine."
-    }
-};
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -43,9 +35,9 @@ async function translateText(text) {
     }
 }
 
-export async function onCall({ message, args, getLang }) {
+export async function onCall({ message, args }) {
     if (args.length === 0) {
-        return message.send(getLang("missingPrompt"));
+        return message.send("Please provide something to imagine.");
     }
 
     const prompt = args.join(" ");
@@ -72,7 +64,7 @@ export async function onCall({ message, args, getLang }) {
             const attachments = cachedImages.map(filePath => fs.createReadStream(filePath));
 
             message.send({
-                body: getLang("message"),
+                body: "Images generated successfully",
                 attachment: attachments
             });
 
@@ -82,7 +74,7 @@ export async function onCall({ message, args, getLang }) {
             attempt++;
             if (attempt >= maxRetries) {
                 const errorMessage = error.response && error.response.data && error.response.data.error ? error.response.data.error : error.message;
-                message.send(`${getLang("error")} - ${errorMessage}`);
+                message.send(`An error occurred while processing the request - ${errorMessage}`);
             }
         }
     }
@@ -90,6 +82,5 @@ export async function onCall({ message, args, getLang }) {
 
 export default {
     config,
-    langData,
     onCall
 };
