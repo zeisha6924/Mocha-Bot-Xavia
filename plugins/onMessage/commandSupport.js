@@ -1,6 +1,6 @@
 const commandFiles = [
-    'ai', 'cai', 'alldl', 'gemini', 'gpt', 'help','help2','imagine', 'lyrics', 
-    'pinterest', 'remini', 'removebg', 'spotify', 
+    'ai', 'alldl', 'cai', 'copilot', 'gemini', 'gpt', 'help', 'help2', 'imagine', 
+    'lyrics', 'pinterest', 'prefix', 'remini', 'removebg', 'spotify', 
     'tempmail', 'tid', 'translate', 'uid', 'unsend', // Add more command names here
 ].flatMap(name => [
     {
