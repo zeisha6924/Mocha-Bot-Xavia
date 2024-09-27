@@ -59,8 +59,7 @@ async function onCall({ message, args, userPermissions, prefix, data }) {
 ╭─╼━━━━━━━━╾─╮
 {list}
 ╰─━━━━━━━━━╾─╯
--help <command name>
-𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎\n𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
+Chat -help <command name>\n\n𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎\n𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
 ━━━━━━━━━━━━━━━━`.replace("{list}", list);
 
         message.reply(responseMessage);
