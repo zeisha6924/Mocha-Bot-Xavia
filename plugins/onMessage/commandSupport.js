@@ -1,12 +1,29 @@
 const commandFiles = [
-    'ai', 'alldl', 'gemini', 'gpt', 'help', 'imagine', 'lyrics', 
+    'ai', 'ai2', 'alldl', 'gemini', 'gpt', 'help', 'imagine', 'lyrics', 
     'pinterest', 'remini', 'removebg', 'spotify', 
     'tempmail', 'tid', 'translate', 'uid', 'unsend', // Add more command names here
-
-].map(name => ({
-    path: `../commands/general/${name}.js`,
-    name
-}));
+].flatMap(name => [
+    {
+        path: `../commands/general/${name}.js`,
+        name
+    },
+    {
+        path: `../commands/📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗/${name}.js`,
+        name
+    },
+    {
+        path: `../commands/🖼 | 𝙸𝚖𝚊𝚐𝚎/${name}.js`,
+        name
+    },
+    {
+        path: `../commands/🎧 | 𝙼𝚞𝚜𝚒𝚌/${name}.js`,
+        name
+    },
+    {
+        path: `../commands/👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜/${name}.js`,
+        name
+    },
+]);
 
 async function loadCommand(filePath) {
     try {
