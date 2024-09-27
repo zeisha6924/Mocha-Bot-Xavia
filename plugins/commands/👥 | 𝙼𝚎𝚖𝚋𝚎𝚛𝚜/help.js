@@ -7,36 +7,6 @@ const config = {
     credits: "XaviaTeam"
 };
 
-const langData = {
-    "en_US": {
-        "help.list": `
-━━━━━━━━━━━━━━━━
-𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
-{commandList}
-Chat -𝚑𝚎𝚕𝚙 <command name>
-𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 
-𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
-
-𝙴𝚡𝚊𝚖𝚙𝚕𝚎: -help example
-━━━━━━━━━━━━━━━━`,
-        "help.commandNotExists": "Command {command} does not exist.",
-        "help.commandDetails": `
-            ⇒ Name: {name}
-            ⇒ Aliases: {aliases}
-            ⇒ Version: {version}
-            ⇒ Description: {description}
-            ⇒ Usage: {usage}
-            ⇒ Category: {category}
-            ⇒ Permissions: {permissions}
-            ⇒ Cooldown: {cooldown}
-            ⇒ Credits: {credits}
-        `,
-        "0": "Member",
-        "1": "Group Admin",
-        "2": "Bot Admin"
-    }
-};
-
 function getCommandName(commandName) {
     return global.plugins.commandsAliases.has(commandName) 
         ? commandName 
@@ -44,7 +14,7 @@ function getCommandName(commandName) {
         || null;
 }
 
-async function onCall({ message, args, getLang, userPermissions, prefix }) {
+async function onCall({ message, args, userPermissions, prefix }) {
     const { commandsConfig } = global.plugins;
     const commandName = args[0]?.toLowerCase();
 
@@ -69,29 +39,34 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
 ╰─━━━━━━━━━╾─╯`)
             .join("");
 
-        return message.reply(getLang("help.list", { commandList }));
+        return message.reply(`
+━━━━━━━━━━━━━━━━
+𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
+${commandList}
+Chat -𝚑𝚎𝚕𝚙 <command name>
+𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 
+𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
+
+𝙴𝚡𝚊𝚖𝚙𝚕𝚎: -help gemini
+━━━━━━━━━━━━━━━━
+`);
     }
 
     const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
     if (!command || command.isHidden || (command.isAbsolute && !global.config?.ABSOLUTES.includes(message.senderID)) || !command.permissions.some(p => userPermissions.includes(p))) {
-        return message.reply(getLang("help.commandNotExists", { command: commandName }));
+        return message.reply(`Command ${commandName} does not exist.`);
     }
 
-    message.reply(getLang("help.commandDetails", {
-        name: command.name,
-        aliases: command.aliases.join(", "),
-        version: command.version || "1.0.0",
-        description: command.description || '',
-        usage: `${prefix}${commandName} ${command.usage || ''}`,
-        category: command.category,
-        permissions: command.permissions.map(p => getLang(String(p))).join(", "),
-        cooldown: command.cooldown || 3,
-        credits: command.credits || ""
-    }).replace(/^ +/gm, ''));
+    message.reply(`
+━━━━━━━━━━━━━━━━
+𝙲𝚘𝚖𝚖𝚊𝚗𝚍 𝙽𝚊𝚖𝚎: ${command.name}
+𝙳𝚎𝚜𝚌𝚛𝚒𝚙𝚝𝚒𝚘𝚗: ${command.description || 'No description provided.'}
+𝚄𝚜𝚊𝚐𝚎: ${prefix}${commandName} ${command.usage || ''}
+━━━━━━━━━━━━━━━━
+    `.replace(/^ +/gm, ''));
 }
 
 export default {
     config,
-    langData,
     onCall
 };
