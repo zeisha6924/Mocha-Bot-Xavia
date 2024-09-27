@@ -2,8 +2,9 @@ const config = {
     name: "tid",
     aliases: ["threadid"],
     version: "1.0.0",
-    description: "Returns the thread ID",
+    description: "Provides the thread ID",
     usage: "",
+    category: "Members",
     credits: "Your Name"
 };
 
