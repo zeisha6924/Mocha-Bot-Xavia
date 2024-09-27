@@ -1,11 +1,11 @@
 const config = {
     name: "example",
-    aliases: ["ex"],
+    aliases: ["example"],
     description: "This is an example command",
     usage: "[query]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    credits: "XaviaTeam",
+    credits: "Coffee",
 };
 
 async function onCall({ message, args }) {
