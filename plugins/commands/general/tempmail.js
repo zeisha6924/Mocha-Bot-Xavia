@@ -6,7 +6,7 @@ const config = {
     description: "Generate a temporary email address or check the inbox of a temporary email.",
     usage: "[create/inbox] [email]",
     cooldown: 5,
-    permissions: [1, 2],
+    permissions: [0, 1, 2],
     isAbsolute: false,
     isHidden: false,
     credits: "coffee",
@@ -16,7 +16,7 @@ async function onCall({ message, args }) {
     try {
         if (args.length === 0) {
             return message.send(
-                "Use 'gpt tempmail create' to generate a temporary email or 'gpt tempmail inbox [email]' to retrieve inbox messages."
+                "Use '-tempmail create' to generate a temporary email or '-tempmail inbox [email]' to retrieve inbox messages."
             );
         }
 
@@ -38,7 +38,7 @@ async function onCall({ message, args }) {
             const email = args[1];
             if (!email) {
                 return message.send(
-                    "❌ | Invalid command. Use 'gpt tempmail create' to generate a temporary email or 'gpt tempmail inbox [email]' to retrieve inbox messages."
+                    "❌ | Invalid command. Use '-tempmail create' to generate a temporary email or '-tempmail inbox [email]' to retrieve inbox messages."
                 );
             }
 
@@ -63,7 +63,7 @@ async function onCall({ message, args }) {
             }
         } else {
             return message.send(
-                "❌ | Invalid command. Use 'gpt tempmail create' to generate a temporary email or 'gpt tempmail inbox [email]' to retrieve inbox messages."
+                "❌ | Invalid command. Use '-tempmail create' to generate a temporary email or '-tempmail inbox [email]' to retrieve inbox messages."
             );
         }
     } catch (error) {
