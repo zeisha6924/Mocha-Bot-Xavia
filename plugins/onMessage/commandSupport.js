@@ -4,10 +4,6 @@ const commandFiles = [
     'tempmail', 'tid', 'translate', 'uid', 'unsend', // Add more command names here
 ].flatMap(name => [
     {
-        path: `../commands/general/${name}.js`,
-        name
-    },
-    {
         path: `../commands/📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗/${name}.js`,
         name
     },
