@@ -5,7 +5,7 @@ const config = {
     aliases: ["chat", "mocha"],
     description: "Interact with GPT-4 via API",
     usage: "[query]",
-    category: "Education",
+    category: "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗",
     cooldown: 3,
     permissions: [0], // General users can access
     isAbsolute: false,
