@@ -5,7 +5,7 @@ const config = {
     aliases: ["tmpmail", "mail"],
     description: "Generate a temporary email address or check the inbox of a temporary email.",
     usage: "[create/inbox] [email]",
-    category: "Members",
+    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜",
     cooldown: 5,
     permissions: [0, 1, 2],
     isAbsolute: false,
