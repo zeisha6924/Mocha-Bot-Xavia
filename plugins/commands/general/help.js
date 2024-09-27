@@ -74,16 +74,16 @@ async function onCall({ message, args, userPermissions, prefix, data }) {
 
             // Categorize commands based on their category property
             switch (value.category) {
-                case "Education":
+                case "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗":
                     educationCommands.push(`${prefix}${key}`);
                     break;
-                case "Image":
+                case "𝙸𝚖𝚊𝚐𝚎":
                     imageCommands.push(`${prefix}${key}`);
                     break;
-                case "Music":
+                case "𝙼𝚞𝚜𝚒𝚌":
                     musicCommands.push(`${prefix}${key}`);
                     break;
-                case "Members":
+                case "𝙼𝚎𝚖𝚋𝚎𝚛𝚜":
                     memberCommands.push(`${prefix}${key}`);
                     break;
             }
@@ -98,19 +98,24 @@ async function onCall({ message, args, userPermissions, prefix, data }) {
 
         message.reply(formattedMessage);
     } else {
-        const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
-        if (!command) return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
+        const resolvedCommandName = getCommandName(commandName);
+        const command = commandsConfig.get(resolvedCommandName);
+
+        if (!command) {
+            return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
+        }
 
         const isHidden = !!command.isHidden;
         const isUserValid = !!command.isAbsolute ? global.config?.ABSOLUTES.some(e => e == message.senderID) : true;
         const isPermissionValid = command.permissions.some(p => userPermissions.includes(p));
-        if (isHidden || !isUserValid || !isPermissionValid)
+        if (isHidden || !isUserValid || !isPermissionValid) {
             return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
+        }
 
         message.reply(langData['en_US']["help.commandDetails"]
             .replace("{name}", command.name)
             .replace("{description}", command.description || 'No description provided.')
-            .replace("{usage}", `${prefix}${commandName} ${command.usage || ''}`)
+            .replace("{usage}", `${prefix}${resolvedCommandName} ${command.usage || ''}`)
             .replace(/^ +/gm, ''));
     }
 }
