@@ -44,17 +44,20 @@ async function onCall({ message }) {
         if (command && command.config) {
             const args = input.slice(name.length).trim().split(" ");
 
-            // Pass in `samirapi` if it's used in the command
+            // Pass in `getLang` to fetch language-specific strings
             const commandParams = {
                 message,
                 args,
-                getLang: (key) => key,
+                getLang: (key) => {
+                    const langData = command.langData; // Access the langData from the command
+                    return langData?.[message.thread?.data?.language]?.[key] || key; // Return the correct language string
+                },
                 data: { thread: { data: { prefix: actualPrefix } } },
                 userPermissions: message.senderID,
                 prefix: actualPrefix
             };
 
-            // Check if the command module uses samirapi and adjust params accordingly
+            // Check if the command module has an onCall function
             if (command.onCall) {
                 await command.onCall(commandParams);
             } else {
@@ -63,7 +66,8 @@ async function onCall({ message }) {
             return;
         }
     }
-    // The function ends without logging anything if no command is found
+    // Log a message if no command is found
+    console.warn(`No command found for input: ${input}`);
 }
 
 export default {
