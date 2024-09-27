@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const cachePath = './plugins/commands/cache';
 
 const config = {
@@ -20,33 +19,25 @@ const config = {
     dependencies: {}
 };
 
-const langData = {
-    "en_US": {
-        "notAReply": "Please reply to the image to enhance it.",
-        "notAPhoto": "This is not a photo.",
-        "processingError": "An error occurred while processing the image.",
-        "executionError": "An error occurred while executing the command.",
-        "successMessage": "The image has been successfully enhanced ✅"
-    }
-};
+async function onCall({ message }) {
+    const reply = message.messageReply;
 
-async function onCall({ message, getLang }) {
-    if (!message.messageReply || !message.messageReply.attachments || message.messageReply.attachments.length === 0) {
-        return message.reply(getLang("notAReply"));
+    if (!reply || !reply.attachments || reply.attachments.length === 0) {
+        return message.reply("Please reply to the image to enhance it.");
     }
 
-    if (message.messageReply.attachments[0].type !== "photo") {
-        return message.reply(getLang("notAPhoto"));
+    if (reply.attachments[0].type !== "photo") {
+        return message.reply("This is not a photo.");
     }
 
     try {
-        const imageUrl = message.messageReply.attachments[0].url;
+        const imageUrl = reply.attachments[0].url;
 
         // Fetch the enhanced image from the API
         const response = await axios.get('https://4k-ayoub.vercel.app/upscale?url=' + encodeURIComponent(imageUrl), { responseType: 'arraybuffer' });
 
         if (response.status !== 200) {
-            return message.reply(getLang("processingError"));
+            return message.reply("An error occurred while processing the image.");
         }
 
         const imgBuffer = Buffer.from(response.data, 'binary');
@@ -60,17 +51,16 @@ async function onCall({ message, getLang }) {
 
         // Send the enhanced image as a reply
         await message.reply({
-            body: getLang("successMessage"),
+            body: "The image has been successfully enhanced",
             attachment: fs.createReadStream(filePath)
         });
     } catch (error) {
         console.error(error);
-        return message.reply(getLang("executionError"));
+        return message.reply("An error occurred while executing the command.");
     }
 }
 
 export default {
     config,
-    langData,
     onCall
 };
