@@ -4,7 +4,7 @@ const commandFiles = [
     'tempmail', 'tid', 'translate', 'uid', 'unsend', // Add more command names here
 ].flatMap(name => [
     {
-        path: `../commands/📖 | 𝙴𝚞𝚍𝚊𝚝𝚒𝚘𝚗/${name}.js`,
+        path: `../commands/📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗/${name}.js`,
         name
     },
     {
@@ -37,24 +37,24 @@ async function onCall({ message }) {
 
     const actualPrefix = message.thread?.data?.prefix || global.config.PREFIX;
 
-    console.log(`Input command: ${input}`);
-    console.log(`Command entry: ${commandEntry ? commandEntry.name : 'None'}`);
-
     if (commandEntry) {
         const { path, name } = commandEntry;
         const command = await loadCommand(path);
 
         if (command && command.config) {
             const args = input.slice(name.length).trim().split(" ");
+
+            // Pass in `samirapi` if it's used in the command
             const commandParams = {
                 message,
                 args,
-                getLang: (key) => (key in command.langData.en_US ? command.langData.en_US[key] : key), // Get the language string
+                getLang: (key) => key,
                 data: { thread: { data: { prefix: actualPrefix } } },
-                userPermissions: message.senderID, // Assuming senderID should be an array of permissions
+                userPermissions: message.senderID,
                 prefix: actualPrefix
             };
 
+            // Check if the command module uses samirapi and adjust params accordingly
             if (command.onCall) {
                 await command.onCall(commandParams);
             } else {
@@ -63,7 +63,7 @@ async function onCall({ message }) {
             return;
         }
     }
-    console.warn(`No command found for input: ${input}`);
+    // The function ends without logging anything if no command is found
 }
 
 export default {
