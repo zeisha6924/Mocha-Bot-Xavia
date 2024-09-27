@@ -7,23 +7,17 @@ const config = {
     cooldown: 3,
     permissions: [0, 1, 2],
     credits: "XaviaTeam"
-}
+};
 
-const langData = {
-    "en_US": {
-        "dataNotReady": "The group's data is not ready",
-        "notReply": "You must reply to the bot's message",
-        "notBotMessage": "The message you replied to is not from the bot",
-        "notAllowed": "This group is not allowed to unsend the bot's message",
-        "error": "An error has occurred"
-    }
-}
-
-async function onCall({ message, args, getLang, data, userPermissions }) {
+async function onCall({ message, args, data, userPermissions }) {
     try {
         // Check if the message is a reply to the bot's message
-        if (message.type !== "message_reply") return message.reply(getLang("notReply"));
-        if (message.messageReply?.senderID !== global.botID) return message.reply(getLang("notBotMessage"));
+        if (message.type !== "message_reply") {
+            return message.reply("You must reply to the bot's message");
+        }
+        if (message.messageReply?.senderID !== global.botID) {
+            return message.reply("The message you replied to is not from the bot");
+        }
 
         const targetMessageID = message.messageReply.messageID;
 
@@ -38,12 +32,11 @@ async function onCall({ message, args, getLang, data, userPermissions }) {
         });
     } catch (err) {
         console.error("Unhandled error:", err);
-        message.reply(getLang("error"));
+        message.reply("An error has occurred");
     }
 }
 
 export default {
     config,
-    langData,
     onCall
-}
+};
