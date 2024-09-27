@@ -5,41 +5,26 @@ const config = {
     usage: "[query]",
     cooldown: 3,
     permissions: [0, 1, 2],
-    isAbsolute: false,
-    isHidden: false,
     credits: "XaviaTeam",
-    extra: {
-        extraProp: "This is an extra property",
-    },
 };
 
-const langData = {
-    lang_1: { message: "This is an example message" },
-    lang_2: { message: "This is an example message" },
-};
-
-/** @type {TOnCallCommand} */
-async function onCall({ message, args, getLang, extra, data, userPermissions, prefix }) {
-    const { balance } = message; // Assuming balance is part of message context
+async function onCall({ message, args }) {
+    const balance = message.balance; // Assuming balance is part of message context
     balance.add(2000); // Example balance operation
 
-    // Send a message and handle reactions/replies
-    const msgData = await message.send(getLang("message"));
+    const msgData = await message.send("This is an example message");
     msgData.addReactEvent({ callback: onReaction });
     msgData.addReplyEvent({ callback: onReply });
 }
 
-/** @type {TReplyCallback} */
-async function onReply({ message, balance, getLang, data }) {
+async function onReply({ message }) {
     // Handle reply events
 }
 
-/** @type {TReactCallback} */
-async function onReaction({ message, balance, getLang, data }) {
+async function onReaction({ message }) {
     // Handle reaction events
 }
 
-// Exporting the config and command handler as specified
 export default {
     config,
     onCall,
