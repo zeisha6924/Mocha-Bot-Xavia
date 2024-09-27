@@ -8,7 +8,7 @@ const config = {
     aliases: ["imagine"],
     description: "Generate images from text",
     usage: "[text]",
-    category: "Image",
+    category: "𝙸𝚖𝚊𝚐𝚎",
     cooldown: 5,
     permissions: [0],
     credits: "Cache",
