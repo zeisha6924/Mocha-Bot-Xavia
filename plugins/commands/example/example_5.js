@@ -4,7 +4,7 @@ const config = {
     description: "This is an example command",
     usage: "[query]",
     cooldown: 3,
-    permissions: [0, 1, 2],
+    permissions: [1, 2],
     credits: "Coffee",
 };
 
