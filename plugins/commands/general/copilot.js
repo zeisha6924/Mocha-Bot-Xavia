@@ -12,81 +12,50 @@ const config = {
     credits: "RN",
 };
 
-const previousResponses = new Map(); // Map to store previous responses for each thread
-const header = "🌊✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝"; // Header for bot messages
-const uid = 100; // Set UID as required
-
-async function onCall({ message, args }) {
-    if (!args.length) {
-        await message.reply(`${header}\n━━━━━━━━━━━━━━━━\nHello! How can I assist you today?\n━━━━━━━━━━━━━━━━`);
-        return;
-    }
-
-    let query = args.join(" ");
-
-    // If the query is a follow-up to a previous message
-    if (previousResponses.has(message.threadID)) {
-        query = `Follow-up: "${previousResponses.get(message.threadID)}"\nUser reply: "${query}"`;
-    }
-
+// Function to send the query to the API and handle the response
+async function sendCopilotQuery({ message, query }) {
     try {
         const typ = global.api.sendTypingIndicator(message.threadID);
 
-        // Send request to the API with the query using the specified URL format
-        const response = await axios.get(`https://samirxpikachuio.onrender.com/bing?message=${encodeURIComponent(query)}&mode=1&uid=${uid}`);
+        // Send request to the API with the query
+        const response = await axios.get(`https://samirxpikachuio.onrender.com/bing?message=${encodeURIComponent(query)}&mode=1&uid=100`);
 
         typ();
 
-        // Log the response to check its structure
-        console.log("API response: ", response.data);
+        // Extract and send the reply
+        if (response.data && response.data.message) {
+            const copilotResponse = response.data.message;
 
-        // Directly use the response data assuming it's at the top level
-        const copilotResponse = response.data; // Update this line
-
-        // Additional logging for debugging purposes
-        console.log(`Sending message: ${copilotResponse}`);
-
-        // Send the extracted message to the user with the specific header
-        const msgData = await message.send(`${header}\n━━━━━━━━━━━━━━━━\n${copilotResponse}\n━━━━━━━━━━━━━━━━`);
-
-        // Store the response for follow-up
-        previousResponses.set(message.threadID, copilotResponse); // Store the last response per thread
+            // Send the extracted message to the user with the new header
+            await message.send(`🌊✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝\n━━━━━━━━━━━━━━━━\n${copilotResponse}\n━━━━━━━━━━━━━━━━`);
+        } else {
+            await message.send("🌊✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝\n━━━━━━━━━━━━━━━━\nError: Unexpected response format from API.\n━━━━━━━━━━━━━━━━");
+        }
     } catch (error) {
-        // Log the error for debugging
         console.error("API call failed: ", error);
         await message.react(`❎`);
     }
 }
 
-/** @type {TReplyCallback} */
+// Main function for handling the command
+async function onCall({ message, args }) {
+    if (!args.length) {
+        await message.reply("🌊✨ | 𝙲𝚘𝚙𝚒𝚕𝚘𝚝\n━━━━━━━━━━━━━━━━\nHello! How can I assist you today?\n━━━━━━━━━━━━━━━━");
+        return;
+    }
+
+    const query = args.join(" ");
+    await sendCopilotQuery({ message, query });
+}
+
+// Function for handling replies (as set up in support.js)
 async function onReply({ message }) {
-    const originalMessage = await message.getOriginal(); // Fetch the original message being replied to
-    if (originalMessage && originalMessage.body.startsWith(header)) {
-        const query = message.body; // Get the reply content
-        await onCall({ message, args: query.split(" ") }); // Call onCall with the reply
-    }
+    const query = message.body;
+    await sendCopilotQuery({ message, query });
 }
 
-// Function to capture all messages and store them
-export default function ({ message }) {
-    const { body, messageID, senderID, attachments } = message;
-
-    // Log the message details if necessary
-    global.data.messages.push({
-        body,
-        messageID,
-        senderID,
-        attachments
-    });
-
-    // Process the reply if it's a reply to a bot message
-    if (message.isReply) {
-        onReply({ message });
-    } else {
-        // Process normal command
-        const args = body.split(" ").slice(1); // Assuming the command starts with the bot's name
-        if (body.startsWith(config.name)) {
-            onCall({ message, args });
-        }
-    }
-}
+export default {
+    config,
+    onCall,
+    onReply,  // Export the onReply function to be used by support.js
+};
