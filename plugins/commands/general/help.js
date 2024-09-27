@@ -6,7 +6,7 @@ const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
 // Path to your command files
-const commandsDir = path.resolve(__dirname, '../commands/general');
+const commandsDir = path.resolve(__dirname, '../general');
 
 const config = {
     name: "help",
