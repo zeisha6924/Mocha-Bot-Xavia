@@ -1,127 +1,86 @@
+import fs from 'fs';
+import path from 'path';
+
+// Path to your command files
+const commandsDir = path.resolve(__dirname, '../commands/general');
+
 const config = {
     name: "help",
-    aliases: ["cmds", "commands"],
-    version: "1.0.3",
-    description: "Show all commands or command details",
-    usage: "[command] (optional)",
-    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜",
-    credits: "XaviaTeam"
-}
+    aliases: ["commands"],
+    version: "1.0.0",
+    description: "Lists all available commands.",
+    usage: "",
+    category: "𝙼𝚎𝚖𝚋𝚎𝚛𝚜", // Main category for help command
+    credits: "Your Name"
+};
 
-const langData = {
-    "en_US": {
-        "help.commandNotExists": "Command {command} does not exist.",
-        "help.commandDetails": `
-━━━━━━━━━━━━━━━━
-𝙲𝚘𝚖𝚖𝚊𝚗𝚍 𝙽𝚊𝚖𝚎: {name}
-𝙳𝚎𝚜𝚌𝚛𝚒𝚙𝚝𝚒𝚘𝚗: {description}
-𝚄𝚜𝚊𝚐𝚎: {usage}
-━━━━━━━━━━━━━━━━
-        `,
-        "availableCommands": `
-━━━━━━━━━━━━━━━━
-𝙰𝚟𝚊𝚒𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
-╭─╼━━━━━━━━╾─╮
-│  📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗
-│ {educationCommands}
-╰─━━━━━━━━━╾─╯
-╭─╼━━━━━━━━╾─╮
-│  🖼 | 𝙸𝚖𝚊𝚐𝚎
-│ {imageCommands}
-╰─━━━━━━━━━╾─╯
-╭─╼━━━━━━━━╾─╮
-│  🎧 | 𝙼𝚞𝚜𝚒𝚌
-│ {musicCommands}
-╰─━━━━━━━━━╾─╯
-╭─╼━━━━━━━━╾─╮
-│  👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜
-│ {memberCommands}
-╰─━━━━━━━━━╾─╯
-!help <command name>
-𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 𝚝𝚑𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
-𝙴𝚡𝚊𝚖𝚙𝚕𝚎: !help gemini
-━━━━━━━━━━━━━━━━
-        `,
-    }
-}
+async function onCall({ message }) {
+    const commandsConfig = new Map();
 
-function getCommandName(commandName) {
-    if (global.plugins.commandsAliases.has(commandName)) return commandName;
+    // Read all files in the commands directory
+    const files = fs.readdirSync(commandsDir);
 
-    for (let [key, value] of global.plugins.commandsAliases) {
-        if (value.includes(commandName)) return key;
+    // Load each command file
+    for (const file of files) {
+        if (file.endsWith('.js')) {
+            const { config } = await import(path.join(commandsDir, file));
+            commandsConfig.set(config.name, config);
+        }
     }
 
-    return null;
+    // Categorize commands
+    const categorizedCommands = {
+        "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗": [],
+        "𝙸𝚖𝚊𝚐𝚎": [],
+        "𝙼𝚞𝚜𝚒𝚌": [],
+        "𝙼𝚎𝚖𝚋𝚎𝚛𝚜": []
+    };
+
+    for (const command of commandsConfig.values()) {
+        if (categorizedCommands[command.category]) {
+            categorizedCommands[command.category].push(command.name);
+        }
+    }
+
+    // Prepare the response message
+    let responseMessage = "━━━━━━━━━━━━━━━━\n";
+    responseMessage += "𝙰𝚟𝚊𝚒𝚋𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚝𝚜:\n";
+
+    for (const [category, commands] of Object.entries(categorizedCommands)) {
+        if (commands.length > 0) {
+            responseMessage += `╭─╼━━━━━━━━╾─╮\n`;
+            responseMessage += `│  ${getCategoryEmoji(category)} | ${category}\n`;
+            responseMessage += commands.map(cmd => `│ !${cmd}`).join('\n') + '\n';
+            responseMessage += `╰─━━━━━━━━━╾─╯\n`;
+        }
+    }
+
+    responseMessage += "!help <command name>\n";
+    responseMessage += "𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 𝚝𝚑𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.\n";
+    responseMessage += "𝙴𝚡𝚊𝚖𝚙𝚕𝚎: !help gemini\n";
+    responseMessage += "━━━━━━━━━━━━━━━━";
+
+    // Send the response
+    message.reply(responseMessage);
 }
 
-async function onCall({ message, args, userPermissions, prefix, data }) {
-    const { commandsConfig } = global.plugins;
-    const commandName = args[0]?.toLowerCase();
-
-    if (!commandName) {
-        const language = data?.thread?.data?.language || global.config.LANGUAGE || 'en_US';
-        let educationCommands = [];
-        let imageCommands = [];
-        let musicCommands = [];
-        let memberCommands = [];
-
-        for (const [key, value] of commandsConfig.entries()) {
-            if (!!value.isHidden) continue;
-            if (!!value.isAbsolute ? !global.config?.ABSOLUTES.some(e => e == message.senderID) : false) continue;
-            if (!value.hasOwnProperty("permissions")) value.permissions = [0, 1, 2];
-            if (!value.permissions.some(p => userPermissions.includes(p))) continue;
-
-            // Categorize commands based on their category property
-            switch (value.category) {
-                case "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗":
-                    educationCommands.push(`${prefix}${key}`);
-                    break;
-                case "𝙸𝚖𝚊𝚐𝚎":
-                    imageCommands.push(`${prefix}${key}`);
-                    break;
-                case "𝙼𝚞𝚜𝚒𝚌":
-                    musicCommands.push(`${prefix}${key}`);
-                    break;
-                case "𝙼𝚎𝚖𝚋𝚎𝚛𝚜":
-                    memberCommands.push(`${prefix}${key}`);
-                    break;
-            }
-        }
-
-        // Format the command lists
-        const formattedMessage = langData['en_US']["availableCommands"]
-            .replace("{educationCommands}", educationCommands.length > 0 ? educationCommands.join("\n│ ") : "No commands available.")
-            .replace("{imageCommands}", imageCommands.length > 0 ? imageCommands.join("\n│ ") : "No commands available.")
-            .replace("{musicCommands}", musicCommands.length > 0 ? musicCommands.join("\n│ ") : "No commands available.")
-            .replace("{memberCommands}", memberCommands.length > 0 ? memberCommands.join("\n│ ") : "No commands available.");
-
-        message.reply(formattedMessage);
-    } else {
-        const resolvedCommandName = getCommandName(commandName);
-        const command = commandsConfig.get(resolvedCommandName);
-
-        if (!command) {
-            return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
-        }
-
-        const isHidden = !!command.isHidden;
-        const isUserValid = !!command.isAbsolute ? global.config?.ABSOLUTES.some(e => e == message.senderID) : true;
-        const isPermissionValid = command.permissions.some(p => userPermissions.includes(p));
-        if (isHidden || !isUserValid || !isPermissionValid) {
-            return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
-        }
-
-        message.reply(langData['en_US']["help.commandDetails"]
-            .replace("{name}", command.name)
-            .replace("{description}", command.description || 'No description provided.')
-            .replace("{usage}", `${prefix}${resolvedCommandName} ${command.usage || ''}`)
-            .replace(/^ +/gm, ''));
+// Helper function to get category emoji
+function getCategoryEmoji(category) {
+    switch (category) {
+        case "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗":
+            return "📖";
+        case "𝙸𝚖𝚊𝚐𝚎":
+            return "🖼";
+        case "𝙼𝚞𝚜𝚒𝚌":
+            return "🎧";
+        case "𝙼𝚎𝚖𝚋𝚎𝚛𝚜":
+            return "👥";
+        default:
+            return "❓";
     }
 }
 
 export default {
     config,
-    langData,
     onCall
-}
+};
