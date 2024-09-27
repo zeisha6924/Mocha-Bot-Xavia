@@ -1,6 +1,6 @@
 const commandFiles = [
     { category: "📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", 
-commands: ['ai', 'cai', 'copilot', 'gemini', 'gpt', 'translate'] },
+commands: ['ai', 'mixtral', 'copilot', 'gemini', 'gpt', 'translate'] },
 
     { category: "🖼 | 𝙸𝚖𝚊𝚐𝚎", 
 commands: ['imagine', 'pinterest', 'removebg', 'remini'] },
