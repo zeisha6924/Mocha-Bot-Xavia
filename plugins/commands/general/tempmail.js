@@ -36,7 +36,10 @@ async function onCall({ message, args, getLang }) {
         if (command === "create") {
             try {
                 // Generate a random temporary email using samirapi
-                const email = await samirapi.getTempMail();
+                const { email } = await samirapi.getTempMail();
+                if (!email) {
+                    throw new Error("Email not generated.");
+                }
                 return message.send(`${getLang("generatedEmail")}${email}`);
             } catch (error) {
                 console.error("❌ | Failed to generate email", error.message);
