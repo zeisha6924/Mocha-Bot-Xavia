@@ -59,18 +59,7 @@ async function onCall({ message, args, getLang, userPermissions, prefix }) {
 ╰─━━━━━━━━━╾─╯`)
             .join("");
 
-        const helpMessage = `
-━━━━━━━━━━━━━━━━
-𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
-${commandList}
-Chat -𝚑𝚎𝚕𝚙 <command name>
-𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 
-𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
-
-𝙴𝚡𝚊𝚖𝚙𝚕𝚎: -help example
-━━━━━━━━━━━━━━━━`;
-
-        return message.reply(helpMessage);
+        return message.reply(commandList);
     }
 
     const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
