@@ -1,58 +1,45 @@
-import axios from 'axios';
-
 const config = {
-    name: "lyrics",
-    aliases: ["lyric"],
-    description: "Fetch lyrics for a song",
-    usage: "[song-name]",
-    category: "𝙼𝚞𝚜𝚒𝚌",
+    name: "chords",
+    aliases: ["chord"],
+    description: "Search for chords by title or artist.",
+    usage: "[query]",
     cooldown: 5,
-    permissions: [0, 1],
-    isAbsolute: false,
-    isHidden: false,
-    credits: "coffee",
+    permissions: [1, 2],
+    credits: "Coffee",
 };
-
-const apiConfig = {
-    name: "Primary API",
-    url: (songName) => `https://lyrist.vercel.app/api/${encodeURIComponent(songName)}`,
-};
-
-async function fetchLyrics(message, songName) {
-    const { name, url } = apiConfig;
-    const apiUrl = url(songName);
-
-    try {
-        const response = await axios.get(apiUrl);
-        const { lyrics, title, artist } = response.data;
-
-        if (!lyrics) {
-            throw new Error("Lyrics not found");
-        }
-
-        sendFormattedLyrics(message, title, artist, lyrics);
-    } catch (error) {
-        console.error(`Error fetching lyrics from ${name} for "${songName}":`, error.message || error);
-        message.send(`Sorry, there was an error getting the lyrics for "${songName}"!`);
-    }
-}
-
-function sendFormattedLyrics(message, title, artist, lyrics) {
-    const formattedLyrics = `🎧 | Title: ${title}\n🎤 | Artist: ${artist}\n━━━━━━━━━━━━━━━━\n${lyrics}\n━━━━━━━━━━━━━━━━`;
-    message.send(formattedLyrics);
-}
 
 async function onCall({ message, args }) {
-    const songName = args.join(" ").trim();
-    if (!songName) {
-        message.send("Please provide a song name!");
-        return;
+    if (!args.length) {
+        return message.send("Please provide a song title or artist to search for chords.");
     }
 
-    await fetchLyrics(message, songName);
+    const query = args.join(" ");
+    const apiUrl = `https://deku-rest-api.gleeze.com/search/chords?q=${encodeURIComponent(query)}`;
+
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.chord) {
+            const { title, artist, chords } = data.chord;
+            const replyMessage = `
+🎧 | Title: ${title}
+🎤 | Artist: ${artist}
+━━━━━━━━━━━━━━━━
+${chords}
+━━━━━━━━━━━━━━━━
+            `;
+            message.send(replyMessage);
+        } else {
+            message.send("No chords found for your search query.");
+        }
+    } catch (error) {
+        console.error(error);
+        message.send("An error occurred while fetching chords. Please try again later.");
+    }
 }
 
 export default {
     config,
-    onCall
+    onCall,
 };
