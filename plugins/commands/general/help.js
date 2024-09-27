@@ -1,98 +1,85 @@
-import fs from 'fs';
-import path from 'path';
-
-// Deriving the directory name in ES Module
-const __filename = new URL(import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
-
-// Path to your command files
-const commandsDir = path.resolve(__dirname, '../general');
-
 const config = {
     name: "help",
-    aliases: ["commands"],
-    version: "1.0.0",
-    description: "Lists all available commands.",
-    usage: "",
-    category: "𝙴𝚞𝚍𝚊𝚌𝚒𝚘𝚗",
-    credits: "Your Name"
-};
-
-async function onCall({ message }) {
-    const commandsConfig = new Map();
-
-    // Read all files in the commands directory
-    const files = fs.readdirSync(commandsDir);
-
-    // Load each command file
-    for (const file of files) {
-        if (file.endsWith('.js')) {
-            try {
-                const commandModule = await import(path.join(commandsDir, file));
-                if (commandModule && commandModule.config) {
-                    commandsConfig.set(commandModule.config.name, commandModule.config);
-                } else {
-                    console.warn(`Warning: The command file ${file} does not export a valid config object.`);
-                }
-            } catch (error) {
-                console.error(`Error loading command file ${file}:`, error);
-            }
-        }
-    }
-
-    // Categorize commands
-    const categorizedCommands = {
-        "𝙴𝚞𝚍𝚊𝚌𝚒𝚘𝚗": [],
-        "𝙸𝚖𝚊𝚐𝚎": [],
-        "𝙼𝚞𝚜𝚒𝚌": [],
-        "𝙼𝚎𝚖𝚋𝚎𝚛𝚜": []
-    };
-
-    for (const command of commandsConfig.values()) {
-        if (categorizedCommands[command.category]) {
-            categorizedCommands[command.category].push(command.name);
-        }
-    }
-
-    // Prepare the response message
-    let responseMessage = "━━━━━━━━━━━━━━━━\n";
-    responseMessage += "𝙰𝚟𝚊𝚒𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚝𝚜:\n";
-
-    for (const [category, commands] of Object.entries(categorizedCommands)) {
-        if (commands.length > 0) {
-            responseMessage += `╭─╼━━━━━━━━╾─╮\n`;
-            responseMessage += `│  ${getCategoryEmoji(category)} | ${category}\n`;
-            responseMessage += commands.map(cmd => `│ !${cmd}`).join('\n') + '\n';
-            responseMessage += `╰─━━━━━━━━━╾─╯\n`;
-        }
-    }
-
-    responseMessage += "!help <command name>\n";
-    responseMessage += "𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 𝚝𝚑𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.\n";
-    responseMessage += "𝙴𝚡𝚊𝚖𝚙𝚕𝚎: !help gemini\n";
-    responseMessage += "━━━━━━━━━━━━━━━━";
-
-    // Send the response
-    message.reply(responseMessage);
+    aliases: ["cmds", "commands"],
+    version: "1.0.3",
+    description: "Show all commands or command details",
+    usage: "[command] (optional)",
+    credits: "XaviaTeam"
 }
 
-// Helper function to get category emoji
-function getCategoryEmoji(category) {
-    switch (category) {
-        case "𝙴𝚞𝚍𝚊𝚌𝚒𝚘𝚗":
-            return "📖";
-        case "𝙸𝚖𝚊𝚐𝚎":
-            return "🖼";
-        case "𝙼𝚞𝚜𝚒𝚌":
-            return "🎧";
-        case "𝙼𝚎𝚖𝚋𝚎𝚛𝚜":
-            return "👥";
-        default:
-            return "❓";
+const langData = {
+    "en_US": {
+        "help.commandNotExists": "Command {command} does not exist.",
+        "help.commandDetails": `
+━━━━━━━━━━━━━━━━
+𝙲𝚘𝚖𝚖𝚊𝚗𝚍 𝙽𝚊𝚖𝚎: {name}
+𝙳𝚎𝚜𝚌𝚛𝚒𝚙𝚝𝚒𝚘𝚗: {description}
+𝚄𝚜𝚊𝚐𝚎: {usage}
+━━━━━━━━━━━━━━━━
+        `,
+        "0": "Member",
+        "1": "Group Admin",
+        "2": "Bot Admin"
+    }
+}
+
+function getCommandName(commandName) {
+    if (global.plugins.commandsAliases.has(commandName)) return commandName;
+
+    for (let [key, value] of global.plugins.commandsAliases) {
+        if (value.includes(commandName)) return key;
+    }
+
+    return null;
+}
+
+async function onCall({ message, args, userPermissions, prefix, data }) {
+    const { commandsConfig } = global.plugins;
+    const commandName = args[0]?.toLowerCase();
+
+    if (!commandName) {
+        let commands = {};
+        const language = data?.thread?.data?.language || global.config.LANGUAGE || 'en_US';
+        for (const [key, value] of commandsConfig.entries()) {
+            if (!!value.isHidden) continue;
+            if (!!value.isAbsolute ? !global.config?.ABSOLUTES.some(e => e == message.senderID) : false) continue;
+            if (!value.hasOwnProperty("permissions")) value.permissions = [0, 1, 2];
+            if (!value.permissions.some(p => userPermissions.includes(p))) continue;
+            if (!commands.hasOwnProperty(value.category)) commands[value.category] = [];
+            commands[value.category].push(value._name && value._name[language] ? value._name[language] : key);
+        }
+
+        let list = Object.keys(commands)
+            .map(category => commands[category].map(cmd => `│ ${prefix}${cmd}`).join("\n"))
+            .join("\n");
+
+        const responseMessage = `
+━━━━━━━━━━━━━━━━
+𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
+╭─╼━━━━━━━━╾─╮
+{list}
+╰─━━━━━━━━━╾─╯
+-help <command name>
+𝚃𝚘 𝚜𝚎𝚎 𝚑𝚘𝚠 𝚝𝚘 𝚞𝚜𝚎 𝚊𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝚌𝚘𝚖𝚖𝚊𝚗𝚍𝚜.
+━━━━━━━━━━━━━━━━`.replace("{list}", list);
+
+        message.reply(responseMessage);
+    } else {
+        const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
+        if (!command) return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
+
+        const isHidden = !!command.isHidden;
+        const isUserValid = !!command.isAbsolute ? global.config?.ABSOLUTES.some(e => e == message.senderID) : true;
+        const isPermissionValid = command.permissions.some(p => userPermissions.includes(p));
+        if (isHidden || !isUserValid || !isPermissionValid)
+            return message.reply(langData['en_US']["help.commandNotExists"].replace("{command}", commandName));
+
+        message.reply(langData['en_US']["help.commandDetails"].replace("{name}", command.name).replace("{description}", command.description || 'No description provided.').replace("{usage}", `${prefix}${commandName} ${command.usage || ''}`).replace(/^ +/gm, ''));
     }
 }
 
 export default {
     config,
+    langData,
     onCall
-};
+}
