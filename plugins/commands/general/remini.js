@@ -15,7 +15,7 @@ const config = {
     description: 'Enhance the image',
     commandCategory: 'Images',
     usages: 'Reply to the image',
-    category: "Image",
+    category: "𝙸𝚖𝚊𝚐𝚎",
     cooldown: 5,
     dependencies: {}
 };
