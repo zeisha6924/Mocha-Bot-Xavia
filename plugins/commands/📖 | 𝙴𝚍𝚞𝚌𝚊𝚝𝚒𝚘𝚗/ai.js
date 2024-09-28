@@ -20,22 +20,24 @@ const apiEndpoints = [
 async function fetchResponse(query) {
     for (const endpoint of apiEndpoints) {
         try {
-            const { data } = await axios.get(`${endpoint}${encodeURIComponent(query)}`);
-            if (data?.response) return data.response; // Return valid response
+            const response = await axios.get(`${endpoint}${encodeURIComponent(query)}`);
+            if (response.data?.response) {
+                return response.data.response; // Return response if valid
+            }
         } catch (error) {
-            console.error(`Failed at ${endpoint}:`, error);
+            console.error(`API call failed at ${endpoint}: `, error);
         }
     }
-    throw new Error("All APIs failed."); // All APIs failed
+    throw new Error("All APIs failed to respond."); // Throw an error if all fail
 }
 
 async function onCall({ message, args }) {
     const id = message.senderID;
-    const query = args.length ? args.join(" ") : "hi"; // Default query
+    const query = args.length ? args.join(" ") : "hi"; // Default query if none provided
     const header = "🧋✨ | 𝙼𝚘𝚌𝚑𝚊 𝙰𝚒\n━━━━━━━━━━━━━━━━";
     const footer = "━━━━━━━━━━━━━━━━";
 
-    // Follow-up query if there's a previous response
+    // Construct follow-up query if there's a previous response
     if (previousResponses.has(id)) {
         const previousResponse = previousResponses.get(id);
         query = `Follow-up on: "${previousResponse}"\nUser reply: "${query}"`;
@@ -43,13 +45,13 @@ async function onCall({ message, args }) {
 
     try {
         const typ = global.api.sendTypingIndicator(message.threadID);
-        const aiResponse = await fetchResponse(query); // Fetch response
+        const aiResponse = await fetchResponse(query); // Fetch response from APIs
         typ();
 
         await message.send(`${header}\n${aiResponse}\n${footer}`);
         previousResponses.set(id, aiResponse); // Store latest response
     } catch (error) {
-        console.error("Failed to fetch AI response:", error);
+        console.error("Failed to fetch AI response: ", error);
         await message.send(`${header}\nAn error occurred while trying to reach the APIs.\n${footer}`);
     }
 }
