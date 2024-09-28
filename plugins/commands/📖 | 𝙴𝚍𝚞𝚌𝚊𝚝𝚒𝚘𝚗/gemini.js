@@ -1,5 +1,3 @@
-import samirapi from 'samirapi';
-
 const config = {
     name: "gemini",
     aliases: ["gemini"],
@@ -30,7 +28,7 @@ async function onCall({ message, args }) {
         const typ = global.api.sendTypingIndicator(threadId);
 
         const apiUrl = `https://www.samirxpikachu.run.place/gemini?text=${encodeURIComponent(query)}&system=default&url=${encodeURIComponent(imageUrl || '')}&uid=${userId}`;
-        const response = await samirapi.fetchData(apiUrl);
+        const response = await fetch(apiUrl).then(res => res.text());
 
         typ();
 
