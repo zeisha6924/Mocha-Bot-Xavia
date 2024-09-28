@@ -4,7 +4,7 @@ const config = {
     name: "gemini",
     aliases: ["geminiAI"],
     description: "Interact with the Gemini AI model.",
-    usage: "[query]",
+    usage: "[text]",
     cooldown: 5,
     permissions: [1, 2],
     credits: "Coffee",
@@ -12,18 +12,21 @@ const config = {
 
 async function onCall({ message, args }) {
     const userId = message.senderID;
-    const text = args.length ? args.join(" ") : "hi"; // Use 'text' instead of 'query'
+    const text = args.length ? args.join(" ") : "hi"; 
 
     try {
         await message.react("⏰");
         const typ = global.api.sendTypingIndicator(message.threadID);
         
-        const response = await samirapi.gemini(text, userId); // Use 'text' as the first parameter
+        const response = await samirapi.gemini(text, userId);
 
         typ();
         console.log("Gemini API response: ", response);
 
-        await message.send(`👩‍💻✨ | 𝙶𝚎𝚖𝚒𝚗𝚒\n━━━━━━━━━━━━━━━━\n${response}\n━━━━━━━━━━━━━━━━`);
+        // Convert the response to a string or access a specific property
+        const responseText = typeof response === 'object' ? JSON.stringify(response, null, 2) : response;
+
+        await message.send(`👩‍💻✨ | 𝙶𝚎𝚖𝚒𝚗𝚒\n━━━━━━━━━━━━━━━━\n${responseText}\n━━━━━━━━━━━━━━━━`);
         await message.react("✅");
     } catch (error) {
         console.error("Gemini API call failed: ", error);
