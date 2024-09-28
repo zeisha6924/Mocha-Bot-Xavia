@@ -19,7 +19,7 @@ const config = {
     description: "Monitors thread property changes, saves initial settings, detects unauthorized changes, warns users, kicks offenders, and reverts changes.",
     usage: "[command]",
     cooldown: 3,
-    permissions: [1, 2],
+    permissions: [0],
     credits: "Coffee",
 };
 
