@@ -12,13 +12,13 @@ const config = {
 
 async function onCall({ message, args }) {
     const userId = message.senderID;
-    const query = args.length ? args.join(" ") : "hi";
+    const text = args.length ? args.join(" ") : "hi"; // Use 'text' instead of 'query'
 
     try {
         await message.react("⏰");
         const typ = global.api.sendTypingIndicator(message.threadID);
         
-        const response = await samirapi.gemini(query, userId);
+        const response = await samirapi.gemini(text, userId); // Use 'text' as the first parameter
 
         typ();
         console.log("Gemini API response: ", response);
