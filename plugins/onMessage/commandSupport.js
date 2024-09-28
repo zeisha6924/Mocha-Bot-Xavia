@@ -9,7 +9,7 @@ commands: ['imagine', 'pinterest', 'removebg', 'remini'] },
 commands: ['lyrics', 'spotify', 'chords'] },
 
     { category: "👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜", 
-commands: ['tempmail', 'tid', 'uid', 'unsend', 'help', 'alldl'] }
+commands: ['tempmail', 'tid', 'uid', 'unsend', 'help', 'alldl', 'font'] }
 
 ];
 
