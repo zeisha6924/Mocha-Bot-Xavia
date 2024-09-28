@@ -11,25 +11,6 @@ const config = {
 };
 
 const previousResponses = new Map(); // Store previous responses for each user
-const apiEndpoints = [
-    "https://samirxpikachuio.onrender.com/gpt4mini?prompt=",
-    "https://www.samirxpikachu.run.place/gpt4mini?prompt=",
-    "http://samirxzy.onrender.com/gpt4mini?prompt="
-];
-
-async function fetchResponse(query) {
-    for (const endpoint of apiEndpoints) {
-        try {
-            const response = await axios.get(`${endpoint}${encodeURIComponent(query)}`);
-            if (response.data?.response) {
-                return response.data.response; // Return response if valid
-            }
-        } catch (error) {
-            console.error(`API call failed at ${endpoint}: `, error);
-        }
-    }
-    throw new Error("All APIs failed to respond."); // Throw an error if all fail
-}
 
 async function onCall({ message, args }) {
     const id = message.senderID;
@@ -45,14 +26,20 @@ async function onCall({ message, args }) {
 
     try {
         const typ = global.api.sendTypingIndicator(message.threadID);
-        const aiResponse = await fetchResponse(query); // Fetch response from APIs
+        const response = await axios.get(`https://www.samirxpikachu.run.place/gpt4mini?prompt=${encodeURIComponent(query)}`);
         typ();
 
-        await message.send(`${header}\n${aiResponse}\n${footer}`);
-        previousResponses.set(id, aiResponse); // Store latest response
+        // Check response validity and send it
+        if (response.data?.response) {
+            const aiResponse = response.data.response;
+            await message.send(`${header}\n${aiResponse}\n${footer}`);
+            previousResponses.set(id, aiResponse); // Store latest response
+        } else {
+            await message.send(`${header}\nSorry, I couldn't get a response from the API.\n${footer}`);
+        }
     } catch (error) {
-        console.error("Failed to fetch AI response: ", error);
-        await message.send(`${header}\nAn error occurred while trying to reach the APIs.\n${footer}`);
+        console.error("API call failed: ", error);
+        await message.send(`${header}\nAn error occurred while trying to reach the API.\n${footer}`);
     }
 }
 
