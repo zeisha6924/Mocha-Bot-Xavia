@@ -4,7 +4,7 @@ const config = {
     description: "Interacts with the Blackbox Conversational AI.",
     usage: "[query]",
     cooldown: 5,
-    permissions: [1, 2],
+    permissions: [0],
     credits: "Coffee",
 };
 
