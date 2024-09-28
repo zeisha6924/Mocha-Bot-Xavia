@@ -3,28 +3,42 @@ import samirapi from 'samirapi';
 const config = {
     name: "gemini",
     aliases: ["gemini"],
-    description: "Interacts with the Gemini AI model.",
-    usage: "[text]",
-    cooldown: 3,
-    permissions: [0],
+    description: "Fetch information using Gemini API.",
+    usage: "[query]",
+    cooldown: 5,
+    permissions: [0, 1, 2],
     credits: "Coffee",
 };
 
 async function onCall({ message, args }) {
-    const userText = args.join(" ") || "hi"; // Use "hi" as default if no query is provided
+    const id = message.senderID; // Retrieve user ID
+    if (!args.length) {
+        await message.reply("Please provide a query to fetch information.");
+        return;
+    }
 
-    await message.react("🕰️"); // Indicate processing
-
-    const userId = message.from; // Assuming `message.from` is the user's ID
+    const query = args.join(" "); // Join the query from arguments
 
     try {
-        const response = await samirapi.gemini(userText, userId);
-        await message.reply(response); // Send back the response
-        await message.react("✅"); // React with ✅ on success
+        await message.react("🕰️"); // React with a clock emoji while processing
+
+        const typ = global.api.sendTypingIndicator(message.threadID); // Send typing indicator
+
+        // Send request to the Gemini API with the query and user ID
+        const response = await samirapi.gemini(query, id);
+
+        typ(); // Stop typing indicator
+
+        // Log the response to check its structure
+        console.log("API response: ", response);
+
+        await message.send(response); // Send the response back to the user
+        await message.react("✅"); // React with a checkmark emoji for success
     } catch (error) {
-        console.error(error);
-        await message.react("❎"); // React with ❎ on error
-        await message.reply("An error occurred while interacting with the Gemini AI."); // Error message
+        // Log the error for debugging
+        console.error("API call failed: ", error);
+        await message.react("❎"); // React with a cross emoji for error
+        await message.send("Sorry, I couldn't fetch the information. Please try again later.");
     }
 }
 
