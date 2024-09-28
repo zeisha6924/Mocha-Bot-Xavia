@@ -1,4 +1,4 @@
-import axios from 'axios';
+import samirapi from 'samirapi';
 
 const config = {
     name: "gemini",
@@ -8,51 +8,34 @@ const config = {
     category: "𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗",
     cooldown: 3,
     permissions: [0, 1, 2],
-    isAbsolute: false,
-    isHidden: false,
     credits: "RN",
 };
 
 const previousResponses = new Map(); // Map to store previous responses for each user
 
 async function onCall({ message, args }) {
-    if (!args.length) {
-        message.reply("👩‍💻✨ | 𝙶𝚎𝚖𝚒𝚗𝚒 \n━━━━━━━━━━━━━━━━\nHello! How can I assist you today?\n━━━━━━━━━━━━━━━━");
-        return;
-    }
-
-    let query = args.join(" ");
+    const query = args.length ? args.join(" ") : "Hi"; // Default to "Hi" if no query is provided
     const id = message.senderID;
-    const previousResponse = previousResponses.get(id); // Get the previous response for the user
 
     // If there's a previous response, handle it as a follow-up
-    if (previousResponse) {
-        query = `Follow-up on: "${previousResponse}"\nUser reply: "${query}"`;
+    if (previousResponses.has(id)) {
+        query = `Follow-up on: "${previousResponses.get(id)}"\nUser reply: "${query}"`;
     }
 
     try {
         const typ = global.api.sendTypingIndicator(message.threadID);
-
-        // Send request to the API with the query
-        const response = await axios.get(`https://deku-rest-api.gleeze.com/gemini?prompt=${encodeURIComponent(query)}`);
-
+        const response = await samirapi.gemini(query, id);
         typ();
 
-        // Log the response to check its structure
-        console.log("API response: ", response.data);
-
         // Extract the reply from the response
-        if (response.data && response.data.gemini) {
-            const geminiResponse = response.data.gemini;
+        if (response?.gemini) {
+            const geminiResponse = response.gemini;
             await message.send(`👩‍💻✨ | 𝙶𝚎𝚖𝚒𝚗𝚒\n━━━━━━━━━━━━━━━━\n${geminiResponse}\n━━━━━━━━━━━━━━━━`);
-
-            // Store the response for follow-up
-            previousResponses.set(id, geminiResponse);
+            previousResponses.set(id, geminiResponse); // Store the response for follow-up
         } else {
             await message.send("👩‍💻✨ | 𝙶𝚎𝚖𝚒𝚗𝚒\n━━━━━━━━━━━━━━━━\nError: Unexpected response format from API.\n━━━━━━━━━━━━━━━━");
         }
     } catch (error) {
-        // Log the error for debugging
         console.error("API call failed: ", error);
         message.react(`❎`);
     }
