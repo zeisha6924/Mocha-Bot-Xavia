@@ -40,7 +40,7 @@ async function onCall({ message }) {
                 const msg = `**Title:** ${title}\n**Posted by:** ${displayname} (@${username})`;
                 await message.send(msg, {
                     attachment: filePath,
-                    threadID: message.threadID, // Include the ThreadID here
+                    threadID: String(message.threadID), // Ensure ThreadID is a string
                 });
             });
 
