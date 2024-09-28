@@ -38,7 +38,10 @@ async function onCall({ message }) {
             writer.on('finish', async () => {
                 writer.close();
                 const msg = `**Title:** ${title}\n**Posted by:** ${displayname} (@${username})`;
-                await message.send(msg, { attachment: filePath });
+                await message.send(msg, {
+                    attachment: filePath,
+                    threadID: message.threadID, // Include the ThreadID here
+                });
             });
 
             writer.on('error', async () => {
