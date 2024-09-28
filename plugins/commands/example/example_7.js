@@ -6,15 +6,14 @@ const config = {
     description: "Description of the example command.", // Brief description
     usage: "[query]", // Usage instructions
     cooldown: 5, // Cooldown time in seconds
-    permissions: [0, 1, 2], // Permissions required to use this command
+    permissions: [1, 2], // Permissions required to use this command
     credits: "Coffee", // Author or credits
 };
 
 async function onCall({ message, args }) {
-    const id = message.senderID; // Retrieve user ID
+    const userId = message.senderID; // Retrieve user ID
     if (!args.length) {
-        await message.reply("Please provide a query to execute the command.");
-        return;
+        return await message.reply("Please provide a query to execute the command."); // Early return for no arguments
     }
 
     const query = args.join(" "); // Join the query from arguments
@@ -25,7 +24,7 @@ async function onCall({ message, args }) {
         const typ = global.api.sendTypingIndicator(message.threadID); // Send typing indicator
 
         // Send request to the API (replace with appropriate function)
-        const response = await samirapi.exampleAPI(query, id); // Replace with actual API call
+        const response = await samirapi.exampleAPI(query, userId); // Replace with actual API call
 
         typ(); // Stop typing indicator
 
@@ -38,7 +37,7 @@ async function onCall({ message, args }) {
         // Log the error for debugging
         console.error("API call failed: ", error);
         await message.react("❎"); // React with a cross emoji for error
-        await message.send("Sorry, I couldn't execute the command. Please try again later.");
+        await message.send("Sorry, I couldn't execute the command. Please try again later."); // User-friendly error message
     }
 }
 
