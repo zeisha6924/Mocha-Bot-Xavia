@@ -1,53 +1,45 @@
+import axios from 'axios';
+
 const config = {
     name: "gemini",
     aliases: ["gemini"],
-    description: "Interacts with the Gemini AI model.",
-    usage: "[query] [imageURL]",
+    description: "Interact with the Gemini AI model.",
+    usage: "[query]",
     cooldown: 5,
     permissions: [1, 2],
     credits: "Coffee",
 };
 
 async function onCall({ message, args }) {
-    const userId = message.senderID;
-    const threadId = message.threadID;
-    const replyMessage = message.messageReply;
+    const userQuery = args.join(" ");
 
-    const query = args.length ? args.join(" ") : "hi";
+    if (!userQuery) return message.reply("Please provide a query.");
 
-    let imageUrl = '';
-    if (replyMessage && replyMessage.attachments && replyMessage.attachments.length > 0) {
-        const attachment = replyMessage.attachments[0];
-        if (attachment.type === 'photo') {
-            imageUrl = attachment.url;
-        }
-    }
+    await message.react("🕰️"); // Indicate processing
+
+    const apiUrl = 'https://free-ai-models.vercel.app/v1/chat/completions';
+    const requestBody = {
+        model: 'gemini-1.5-pro-latest', // Modify the model if needed
+        messages: [
+            { role: 'system', content: '' }, // System message, can be left blank or customized
+            { role: 'user', content: userQuery } // User query from the message
+        ]
+    };
 
     try {
-        await message.react("🕰️");
-        const typ = global.api.sendTypingIndicator(threadId);
+        const response = await axios.post(apiUrl, requestBody);
 
-        const apiUrl = `https://www.samirxpikachu.run.place/gemini?text=${encodeURIComponent(query)}&system=default&url=${encodeURIComponent(imageUrl || '')}&uid=${userId}`;
-        const response = await fetch(apiUrl).then(res => res.text());
+        if (!response.data) throw new Error("No data returned from API");
 
-        typ();
+        const { choices } = response.data;
+        const result = choices?.[0]?.message?.content || "Sorry, I couldn't find a response.";
 
-        const header = "👩‍💻✨ | 𝙶𝚎𝚖𝚒𝚗𝚒\n━━━━━━━━━━━━━━━━\n";
-        const footer = "\n━━━━━━━━━━━━━━━━";
-
-        if (response && typeof response === 'string') {
-            await message.send(`${header}${response}${footer}`);
-            await message.react("✅");
-        } else {
-            await message.send(`${header}Error: Unexpected response format from API.${footer}`);
-            await message.react("❎");
-        }
+        await message.reply(result); // Send back the AI's response
+        await message.react("✅"); // React with ✅ on success
     } catch (error) {
-        console.error("API call failed: ", error);
-        const header = "👩‍💻✨ | 𝙶𝚎𝚖𝚒𝚗𝚒\n━━━━━━━━━━━━━━━━\n";
-        const footer = "\n━━━━━━━━━━━━━━━━";
-        await message.send(`${header}Error: Unexpected response format from API.${footer}`);
-        await message.react("❎");
+        console.error('Error:', error.response ? error.response.data : error.message);
+        await message.react("❎"); // React with ❎ on error
+        await message.reply("An error occurred while interacting with the AI."); // Error message
     }
 }
 
