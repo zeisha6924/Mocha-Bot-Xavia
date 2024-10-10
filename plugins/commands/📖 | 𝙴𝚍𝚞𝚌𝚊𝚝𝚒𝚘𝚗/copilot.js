@@ -34,7 +34,7 @@ async function onCall({ message, args }) {
         const typ = global.api.sendTypingIndicator(message.threadID);
 
         // Send request to the API with the query
-        const response = await axios.get(`https://samirxpikachuio.onrender.com/bing?message=${encodeURIComponent(query)}&mode=1&uid=${id}`);
+        const response = await axios.get(`https://www.samirxpikachu.run.place/bing?message=${encodeURIComponent(query)}&mode=1&uid=${id}`);
 
         typ();
 
