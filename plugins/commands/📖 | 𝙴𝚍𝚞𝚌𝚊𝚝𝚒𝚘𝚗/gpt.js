@@ -26,7 +26,7 @@ async function onCall({ message, args }) {
         const typ = global.api.sendTypingIndicator(message.threadID);
 
         // Send request to the new API with the query
-        const response = await axios.get(`https://deku-rest-api.gleeze.com/gpt4?prompt=${encodeURIComponent(query)}&uid=${uid}`);
+        const response = await axios.get(`https://deku-rest-apis.ooguy.com/gpt4?prompt=${encodeURIComponent(query)}&uid=${uid}`);
 
         typ();
 
