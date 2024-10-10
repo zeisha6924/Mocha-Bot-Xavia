@@ -6,7 +6,7 @@ const langData = {
 
 function onCall({ message, getLang, data }) {
     const validTriggers = ["prefix", "🧋"];
-    
+
     if (validTriggers.includes(message.body) && message.senderID !== global.botID) {
         message.reply(getLang("prefix.get", {
             prefix: data?.thread?.data?.prefix || global.config.PREFIX
