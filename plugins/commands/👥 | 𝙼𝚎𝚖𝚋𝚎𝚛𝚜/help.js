@@ -1,17 +1,17 @@
 const config = {
     name: "help",
-    aliases: ["cmds", "commands"],
+    aliases: ["help"],
     version: "1.0.3",
     description: "Show all commands or command details",
     usage: "[command] (optional)",
-    credits: "XaviaTeam"
+    credits: "coffee"
 };
 
 function getCommandName(commandName) {
-    return global.plugins.commandsAliases.has(commandName) 
-        ? commandName 
-        : Array.from(global.plugins.commandsAliases).find(([key, aliases]) => aliases.includes(commandName))?.[0] 
-        || null;
+    if (global.plugins.commandsAliases.has(commandName)) {
+        return commandName;
+    }
+    return Array.from(global.plugins.commandsAliases).find(([, aliases]) => aliases.includes(commandName))?.[0] || null;
 }
 
 async function onCall({ message, args, userPermissions, prefix }) {
@@ -23,13 +23,22 @@ async function onCall({ message, args, userPermissions, prefix }) {
         const commands = {};
 
         for (const [key, value] of commandsConfig.entries()) {
-            if (value.isHidden || (value.isAbsolute && !global.config?.ABSOLUTES.includes(message.senderID)) || !value.permissions?.some(p => userPermissions.includes(p))) continue;
+            // Check for command visibility and permissions
+            if (value.isHidden || (value.isAbsolute && !global.config?.ABSOLUTES.includes(message.senderID)) || !value.permissions?.some(p => userPermissions.includes(p))) {
+                continue;
+            }
             const category = commands[value.category] || (commands[value.category] = []);
             category.push(`- ${value._name?.[language] || key}`);
         }
 
         // Arrange categories in the specified order
-        const orderedCategories = ["📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", "🖼 | 𝙸𝚖𝚊𝚐𝚎", "🎧 | 𝙼𝚞𝚜𝚒𝚌", "👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜"];
+        let orderedCategories = ["📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", "🖼 | 𝙸𝚖𝚊𝚐𝚎", "🎧 | 𝙼𝚞𝚜𝚒𝚌", "👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜"];
+
+        // Check if user has permissions 1 or 2 to show the "Owner" category
+        if (userPermissions.includes(1) || userPermissions.includes(2)) {
+            orderedCategories.push("🐢💨 | 𝙾𝚠𝚗𝚎𝚛"); // Add the Owner category at the end
+        }
+
         const commandList = orderedCategories
             .filter(category => commands[category])
             .map(category => `
@@ -52,9 +61,9 @@ Chat -𝚑𝚎𝚕𝚙 <command name>
 `);
     }
 
-    const command = commandsConfig.get(getCommandName(commandName, commandsConfig));
+    const command = commandsConfig.get(getCommandName(commandName));
     if (!command || command.isHidden || (command.isAbsolute && !global.config?.ABSOLUTES.includes(message.senderID)) || !command.permissions.some(p => userPermissions.includes(p))) {
-        return message.reply(`Command ${commandName} does not exist.`);
+        return message.reply(`Command ${commandName} does not exist or you do not have permission to access it.`);
     }
 
     message.reply(`
