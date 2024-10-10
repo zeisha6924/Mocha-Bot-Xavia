@@ -34,11 +34,6 @@ async function onCall({ message, args, userPermissions, prefix }) {
         // Arrange categories in the specified order
         let orderedCategories = ["📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", "🖼 | 𝙸𝚖𝚊𝚐𝚎", "🎧 | 𝙼𝚞𝚜𝚒𝚌", "👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜"];
 
-        // Check if user has permissions 1 or 2 to show the "Owner" category
-        if (userPermissions.includes(1) || userPermissions.includes(2)) {
-            orderedCategories.push("🐢💨 | 𝙾𝚠𝚗𝚎𝚛"); // Add the Owner category at the end
-        }
-
         const commandList = orderedCategories
             .filter(category => commands[category])
             .map(category => `
