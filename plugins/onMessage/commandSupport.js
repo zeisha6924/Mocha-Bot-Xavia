@@ -1,49 +1,77 @@
-const commandFiles = [
-    { category: "📖 | 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗", commands: ['ai', 'blackbox', 'copilot', 'gemini', 'gpt', 'translate'] },
-    { category: "🖼 | 𝙸𝚖𝚊𝚐𝚎", commands: ['imagine', 'pinterest', 'removebg', 'remini'] },
-    { category: "🎧 | 𝙼𝚞𝚜𝚒𝚌", commands: ['lyrics', 'spotify', 'chords'] },
-    { category: "👥 | 𝙼𝚎𝚖𝚋𝚎𝚛𝚜", commands: ['tempmail', 'tid', 'uid', 'unsend', 'help', 'alldl', 'font', 'adduser'] }
-];
+import fs from 'fs';
+import path from 'path';
 
-const commandFilesWithPaths = commandFiles.flatMap(({ category, commands }) =>
-    commands.map(command => ({
-        path: `../commands/${category}/${command}.js`,
-        name: command
-    }))
-);
+const commandRootDir = path.resolve('./plugins/commands');
 
-const loadCommand = async filePath => {
+const fetchCommandFiles = () => {
+    const commandFiles = [];
+
+    const categories = fs.readdirSync(commandRootDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+
+    for (const category of categories) {
+        const commandDir = path.join(commandRootDir, category);
+        const commands = fs.readdirSync(commandDir)
+            .filter(file => file.endsWith('.js'))
+            .map(file => path.join(commandDir, file));
+
+        if (commands.length > 0) {
+            commandFiles.push({
+                category,
+                commands
+            });
+        }
+    }
+
+    return commandFiles;
+};
+
+const loadCommand = async (filePath) => {
     try {
         const { default: commandModule } = await import(filePath);
-        return commandModule;
-    } catch {
+        if (commandModule?.config?.name) {
+            return { commandModule, name: commandModule.config.name };
+        } else {
+            console.warn(`Command config.name not found in ${filePath}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Failed to load command from ${filePath}:`, error);
         return null;
     }
 };
 
 async function onCall({ message }) {
     const input = message.body.trim().toLowerCase();
-    const commandEntry = commandFilesWithPaths.find(({ name }) => input.startsWith(name));
-    
-    if (commandEntry) {
-        const { path, name } = commandEntry;
-        const command = await loadCommand(path);
 
-        if (command?.config) {
-            const args = input.slice(name.length).trim().split(" ");
-            const prefix = message.thread?.data?.prefix || global.config.PREFIX;
-            
-            if (command.onCall) {
-                await command.onCall({ 
-                    message, 
-                    args, 
-                    data: { thread: { data: { prefix } } }, 
-                    userPermissions: message.senderID, 
-                    prefix 
-                });
+    const commandFiles = fetchCommandFiles();
+    for (const { commands } of commandFiles) {
+        for (const filePath of commands) {
+            const commandData = await loadCommand(filePath);
+            if (commandData && input.startsWith(commandData.name)) {
+                const { commandModule, name } = commandData;
+
+                if (commandModule?.config && commandModule.onCall) {
+                    const args = input.slice(name.length).trim().split(" ");
+                    const prefix = message.thread?.data?.prefix || global.config.PREFIX;
+
+                    await commandModule.onCall({ 
+                        message, 
+                        args, 
+                        data: { thread: { data: { prefix } } }, 
+                        userPermissions: message.senderID, 
+                        prefix 
+                    });
+                } else {
+                    console.warn(`Command ${name} is not properly configured or missing onCall function.`);
+                }
+                return;
             }
         }
     }
+
+    console.warn('No matching command found.');
 }
 
 export default {
